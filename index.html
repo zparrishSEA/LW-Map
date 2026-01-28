@@ -8,25 +8,14 @@
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <meta name="description" content="Secular Education Association LifeWise Academy Map. View program progress, signature counts, employee info, and district status across the USA.">
-    <meta name="keywords" content="LifeWise, LifeWise map, map, community impact, district status, signature tracking, SEA, Secular Education Association">
-
+    <meta name="description" content="Secular Education Association LifeWise Academy Map. View program progress and district status across the USA.">
     <meta property="og:title" content="LifeWise Program Map">
-    <meta property="og:description" content="Tracking community infiltration and program maturity in real-time.">
-    <meta property="og:url" content="http://map.seculareducationassociation.org">
-    <meta property="og:type" content="website">
     <meta property="og:image" content="http://map.seculareducationassociation.org/mapshot.jpg">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="LifeWise Program Map">
-    <meta name="twitter:image" content="http://map.seculareducationassociation.org/mapshot.jpg">
 
     <style>
         body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; height: 100vh; overflow: hidden; width: 100vw; }
         
-        /* Sidebar Scroll Fix */
         #sidebar { 
             width: 320px; 
             background: #fff; 
@@ -53,12 +42,9 @@
         .layer-desc { display: block; font-size: 9px; color: #777; margin-left: 22px; line-height: 1.1; }
         .marker-count { color: #007bff; font-weight: bold; }
 
-        /* Sidebar Content */
         .sidebar-intro { padding: 0 15px 15px 15px; text-align: left; }
         .sidebar-intro p { font-size: 12.5px; color: #444; line-height: 1.5; margin-bottom: 12px; }
         .info-link { display: inline-block; font-size: 12px; color: #007bff; text-decoration: none; font-weight: bold; border: 1px solid #007bff; padding: 6px 10px; border-radius: 5px; margin-bottom: 10px; }
-        .info-link:hover { background: #007bff; color: #fff; }
-
         .update-badge { font-size: 10px; color: #28a745; background: #eaffed; display: inline-block; padding: 3px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #c3e6cb; margin-bottom: 10px; }
 
         .sidebar-header { padding: 15px; border-bottom: 1px solid #eee; background: #fff; flex-shrink: 0; }
@@ -70,7 +56,7 @@
         .result-item { padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
 
         .share-container { margin-top: 15px; font-size: 11px; color: #666; display: flex; align-items: center; gap: 8px; border-top: 1px solid #eee; padding-top: 15px; }
-        .share-btn { padding: 4px 10px; border-radius: 4px; text-decoration: none; color: white; font-weight: bold; transition: opacity 0.2s; }
+        .share-btn { padding: 4px 10px; border-radius: 4px; text-decoration: none; color: white; font-weight: bold; }
         .fb { background-color: #1877F2; }
         .tw { background-color: #000; }
 
@@ -86,7 +72,6 @@
             }
             #map { width: 100%; flex-grow: 1; }
             
-            /* Compact Mobile Legend Fix */
             .leaflet-control-layers { 
                 max-height: 160px !important; 
                 overflow-y: auto !important; 
@@ -96,18 +81,21 @@
             .layer-desc { display: none; }
         }
 
-        /* Landscape Phone Fix */
-        @media (max-width: 900px) and (orientation: landscape) {
+        /* LANDSCAPE SPECIFIC FIX */
+        @media (max-width: 950px) and (orientation: landscape) {
             body { flex-direction: row; }
             #sidebar { 
-                width: 260px; 
-                height: 100vh; 
-                max-height: 100vh; 
+                width: 250px !important; 
+                height: 100vh !important; 
+                max-height: 100vh !important; 
             }
-            #map { flex-grow: 1; }
             .leaflet-control-layers { 
-                max-height: 100px !important; 
+                max-height: 110px !important; /* Forces scrollbar for the legend */
+                width: 130px !important;
+                margin-top: 10px !important;
             }
+            .company-logo { max-width: 100px; }
+            .sidebar-intro p { font-size: 11px; }
         }
     </style>
 </head>
@@ -119,12 +107,12 @@
             <img src="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1" alt="SEA Logo" class="company-logo">
         </a>
         <div class="sidebar-intro">
-            <p>Secular Education Association's LifeWise Program Map tracks implementation across school districts nationwide. LifeWise uses an 11-step process to bring religious instruction franchise into public schools. Find your district, stay informed and protect your community from the invasion of Christian Nationalism.</p>
+            <p>The SEA LifeWise Program Map tracks implementation across school districts nationwide. Stay informed and protect your community.</p>
             <a href="https://seculareducationassociation.org/lifewise-launch-process/" target="_blank" class="info-link">What Do These Steps Mean?</a>
             <div id="last-updated" class="update-badge">● Live Data...</div>
             <div class="share-container">
                 <a href="https://www.facebook.com/sharer/sharer.php?u=http://map.seculareducationassociation.org/" target="_blank" class="share-btn fb">Facebook</a>
-                <a href="https://twitter.com/intent/tweet?text=Protect your community from Christian Nationalism with Secular Education Association's LifeWise Program Map!&url=http://map.seculareducationassociation.org/" target="_blank" class="share-btn tw">X</a>
+                <a href="https://twitter.com/intent/tweet?url=http://map.seculareducationassociation.org/" target="_blank" class="share-btn tw">X</a>
             </div>
         </div>
     </div>
@@ -145,7 +133,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
 <script>
-    // 1. Initialize Map
     const isMobile = window.innerWidth < 768;
     const map = L.map('map').setView([39.5, -98.0], isMobile ? 3 : 4);
     
@@ -155,7 +142,6 @@
     const markerGroup = L.featureGroup().addTo(map);
     const sheetCounts = {};
 
-    // 2. Data Config
     let sheets = [
         { name: "Step 0", desc: "Under 10 Signatures", color: "#ABABAB", urls: [
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMii-mD_nfqLN4g6LkP1T2D8qFD2VE2KhEpsDMo8P5JqELjYzAzQmna7EFqLkgZL4MqbVq9QzBRyQW/pub?output=csv",
@@ -177,11 +163,12 @@
         { name: "Step 11", desc: "Mature Program", color: "#420102", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIEKicXubtMmQ2HgDKNqITU-M_6WtG6Agqv44XLGbPLNckcZuM8q7P9eQIKf3-QadEkoLtARW7M2LJ/pub?output=csv" }
     ];
 
-    // 3. Legend Config
     sheets.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    
+    // Switch to Top Right Legend on ALL mobile/narrow screens to avoid UI overlap
     const layerControl = L.control.layers(null, null, { 
         collapsed: false, 
-        position: isMobile ? 'topright' : 'bottomright' 
+        position: (window.innerWidth < 950) ? 'topright' : 'bottomright' 
     }).addTo(map);
 
     sheets.forEach(sheet => {
@@ -192,7 +179,6 @@
         layerControl.addOverlay(sheet.layerGroup, label);
     });
 
-    // 4. Data Loading
     async function loadSheet(sheet, specificUrl) {
         const urlToUse = specificUrl || sheet.url;
         const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(urlToUse);
@@ -223,7 +209,6 @@
         } catch (e) { console.error(e); }
     }
 
-    // 5. Execution
     function setLastUpdated() {
         const now = new Date();
         document.getElementById('last-updated').innerHTML = `● Live Data: Updated ${now.toLocaleDateString()} at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
@@ -235,7 +220,6 @@
     });
     setLastUpdated();
 
-    // 6. UI
     document.getElementById('btnSearch').addEventListener('click', function() {
         const query = document.getElementById('mapSearch').value.toLowerCase().trim();
         const list = document.getElementById('resultsList');
