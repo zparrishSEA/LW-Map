@@ -1,164 +1,192 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Master Map: Multi-Sheet & Auto-Fix Headers</title>
+    <title>LifeWise Program Map</title>
+    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; height: 100vh; overflow: hidden; }
         #sidebar { width: 320px; background: #fff; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 1001; }
         .logo-container { padding: 15px; text-align: center; border-bottom: 1px solid #eee; background: #fafafa; }
-        .company-logo { max-width: 130px; height: auto; }
-        #map { flex-grow: 1; position: relative; }
+        .company-logo { max-width: 130px; height: auto; margin-bottom: 10px; }
+        #map { flex-grow: 1; position: relative; height: 100%; } /* Map home restored */
+
+        /* Legend & Layer Styles */
         .leaflet-control-layers { max-width: 250px; font-size: 11px !important; background: rgba(255, 255, 255, 0.9) !important; box-shadow: 0 0 15px rgba(0,0,0,0.2) !important; border-radius: 8px !important; }
         .leaflet-control-layers-overlays label { margin-bottom: 2px !important; }
         .layer-desc { display: block; font-size: 9px; color: #777; margin-left: 22px; line-height: 1.1; }
         .marker-count { color: #007bff; font-weight: bold; }
+
+        /* Sidebar Content Styles */
+        .sidebar-intro { padding: 0 15px 15px 15px; text-align: left; }
+        .sidebar-intro p { font-size: 13px; color: #555; line-height: 1.4; margin-bottom: 12px; }
+        .info-link { display: inline-block; font-size: 12px; color: #007bff; text-decoration: none; font-weight: bold; border: 1px solid #007bff; padding: 6px 10px; border-radius: 5px; transition: all 0.2s ease; }
+        .info-link:hover { background: #007bff; color: #fff; }
+
+        .update-badge { font-size: 10px; color: #28a745; background: #eaffed; display: inline-block; padding: 3px 8px; border-radius: 4px; margin-top: 12px; font-weight: bold; border: 1px solid #c3e6cb; }
+
         .sidebar-header { padding: 15px; border-bottom: 1px solid #eee; }
-        .search-box { width: 100%; padding: 8px; border-radius: 20px; border: 1px solid #ccc; outline: none; }
+        .search-box { width: 100%; padding: 8px; border-radius: 20px; border: 1px solid #ccc; outline: none; box-sizing: border-box; }
         .btn-group { display: flex; gap: 5px; margin-top: 10px; }
         button { flex: 1; padding: 8px; border-radius: 20px; border: none; background: #007bff; color: white; cursor: pointer; font-size: 11px; }
         #resultsList { flex-grow: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; }
         .result-item { padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            #sidebar { width: 100%; height: auto; max-height: 45%; border-right: none; }
+            #map { width: 100%; flex-grow: 1; }
+            .leaflet-control-layers { margin-bottom: 30px !important; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <div class="logo-container">
-            <img src="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1" alt="Logo" class="company-logo">
+<div id="sidebar">
+    <div class="logo-container">
+    <a href="https://seculareducationassociation.org" target="_blank" title="Visit our website">
+        <img src="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1" alt="Logo" class="company-logo">
+    </a>
+        <div class="sidebar-intro">
+            <p>Secular Education Association's LifeWise Program Map tracks LifeWise's implementation process in school districts all across the country. LifeWise developed an 11 step launch process with a stated goal of bringing their plug-and-play religious instruction franchise into every one of our nation's public schools. Find your district, stay informed and protect your community from the invasion of Christian Nationalism.</p>
+            <a href="https://seculareducationassociation.org/lifewise-launch-process/" target="_blank" class="info-link">What Do These Steps Mean?</a>
+            <div id="last-updated" class="update-badge">Live Data...</div>
         </div>
-        <div class="sidebar-header">
-            <input type="text" id="mapSearch" class="search-box" placeholder="Search data...">
-            <div class="btn-group">
-                <button id="btnSearch">Search</button>
-                <button id="btnReset" style="background:#6c757d;">Reset View</button>
-            </div>
-        </div>
-        <ul id="resultsList"></ul>
     </div>
 
-    <div id="map"></div>
+    <div class="sidebar-header">
+        <input type="text" id="mapSearch" class="search-box" placeholder="Find your district...">
+        <div class="btn-group">
+            <button id="btnSearch" style="background:89ebfa;">Search</button>
+            <button id="btnReset" style="background:#6c757d;">Reset View</button>
+        </div>
+    </div>
+    <ul id="resultsList"></ul>
+</div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+<div id="map"></div>
 
-    <script>
-        const map = L.map('map').setView([20, 0], 2);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
-        const allMarkers = [];
-        const markerGroup = L.featureGroup().addTo(map);
+<script>
+    // 1. Initialize Map
+    const map = L.map('map').setView([39.8283, -98.5795], 3);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'Â© OpenStreetMap' }).addTo(map);
 
-        // Track counts globally for multi-sheet layers (like Step 0)
-        const sheetCounts = {};
+    const allMarkers = [];
+    const markerGroup = L.featureGroup().addTo(map);
+    const sheetCounts = {};
 
-        let sheets = [
-            {
-                name: "Step 0",
-                desc: "Under 10 Signatures",
-                color: "#ABABAB",
-                urls: [
-                    "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMii-mD_nfqLN4g6LkP1T2D8qFD2VE2KhEpsDMo8P5JqELjYzAzQmna7EFqLkgZL4MqbVq9QzBRyQW/pub?output=csv",
-                    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSn0_v9d45f1-qsbK56zofHPyjVH0NEodOSmuexGt-D0eAEjyhCv_sXh8o11Vo2kzHozXS1mscFQ9Js/pub?output=csv",
-                    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXnmM1UDBJsZT66GmP9C2C9GzTK7pHrKNZn9ZZltQurpfQ3qlyRANWxQWGH5K6fsgwXw0TkXysk_ZJ/pub?output=csv",
-                    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSaa8gDF6ng1E8YUJ-THYsfHZ4M28y91nGpASy5GHfmfgISsXoP_XmswOEhZeYW8FHVsxzE1gh-Dstf/pub?output=csv",
-                    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQN6RMquGyImew2ZpR_-k-habAJSR0bgJO58Q3FhSgMaJdavS_QTVJjnnhXyUpRq8_t1QVpnmsFx8ig/pub?output=csv"
-                ]
-            },
-            { name: "Step 1", desc: "10-50 Signatures", color: "#2E85DB", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTzJpeI6tIzbJ2EEs7hXP5AB0y2-Y0xZtvtZQu7Pv55gYrg8vCmwKNZnzam_W4KjY6JxbSM2W0E4Tj/pub?output=csv" },
-            { name: "Step 2", desc: "Community Kickoff Meeting", color: "#ACDBB0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTnYrjWo0CCwhgbPCqHMCOE4td62A9zdq97d6zkDNlFaSSC0je1ID5qCfZ0gUxly_FeDg06NYbjBhH/pub?output=csv" },
-            { name: "Step 3", desc: "Raise $500", color: "#25DB20", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5F0lL2gP5fujfLazuAAu6-HyTTdH_APQ53BXOygvz5QxZUbPmibFCLVZkLqTmj1bp1dDy5X7hJ-se/pub?output=csv" },
-            { name: "Step 4", desc: "Form Local Steering Committee", color: "#00FFA0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj-xjmLdJ9Uemt4tdbtbr75QNZVp5C19dYNiKkocutLxA4oHjeiwYjVNoDrXS278WWGKITZ0mCWzDw/pub?output=csv" },
-            { name: "Step 5", desc: "Draft A Plan", color: "#B0A122", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vReQNENdd47Fj4WRl-56WH1RzfOS_ZMMsD3zIlRMzLRnrxnUEdazAt7jrL--u3E6sSL3dfkiBKqlxU7/pub?output=csv" },
-            { name: "Step 6", desc: "Obtain School Approval", color: "#FFCB00", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyKG0veTaCk1pgKISO-qJonQLYZBxYprsHpt9j_Hh64L0XzZJk8IvZ6znEf2_YsgtKMbWOSsskkG8e/pub?output=csv" },
-            { name: "Step 7", desc: "Recruit Your Team", color: "#FFD0A2", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTotWVs9_F99p8CO-JA18RrnAhUXLbAM-C--2tMh-Xp9aShvwO6fJAO80J7rIs8WrbpyVmdF7FojsyG/pub?output=csv" },
-            { name: "Step 8", desc: "Train Your Team", color: "#FC80FF", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRycSZF-EW5KiNHdqBbAlSj8fcvU8IGdfej7Iwr4iYQNGJko_OlaAD67SECzfN0od_Q5BKJekwg2Pa8/pub?output=csv" },
-            { name: "Step 9", desc: "Execute Your Plan", color: "#FA5188", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzWNJx52SA-lsyLtOAfw-KZmw3x7vvbmWvp6D670GEgpbaitB8ylH9zKV1Xwc_76niUvuKIgDRlUUB/pub?output=csv" },
-            { name: "Step 10", desc: "Live LifeWise Program", color: "#FF0004", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_UXNj1Uc9qQOD8e0Bou-eFkzLHYY0rPQEgaRnlfBoXMxE_ZmW29gK46Dgvf1tz8qbMl2-MbyoYHKp/pub?output=csv" },
-            { name: "Step 11", desc: "Mature LifeWise Program", color: "#420102", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIEKicXubtMmQ2HgDKNqITU-M_6WtG6Agqv44XLGbPLNckcZuM8q7P9eQIKf3-QadEkoLtARW7M2LJ/pub?output=csv" }
-        ];
+    // 2. Sheet Data
+    let sheets = [
+        { name: "Step 0", desc: "Under 10 Signatures", color: "#ABABAB",
+          urls: [
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMii-mD_nfqLN4g6LkP1T2D8qFD2VE2KhEpsDMo8P5JqELjYzAzQmna7EFqLkgZL4MqbVq9QzBRyQW/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vSn0_v9d45f1-qsbK56zofHPyjVH0NEodOSmuexGt-D0eAEjyhCv_sXh8o11Vo2kzHozXS1mscFQ9Js/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXnmM1UDBJsZT66GmP9C2C9GzTK7pHrKNZn9ZZltQurpfQ3qlyRANWxQWGH5K6fsgwXw0TkXysk_ZJ/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vSaa8gDF6ng1E8YUJ-THYsfHZ4M28y91nGpASy5GHfmfgISsXoP_XmswOEhZeYW8FHVsxzE1gh-Dstf/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vQN6RMquGyImew2ZpR_-k-habAJSR0bgJO58Q3FhSgMaJdavS_QTVJjnnhXyUpRq8_t1QVpnmsFx8ig/pub?output=csv"
+          ]
+        },
+        { name: "Step 1", desc: "10-50 Signatures", color: "#2E85DB", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTzJpeI6tIzbJ2EEs7hXP5AB0y2-Y0xZtvtZQu7Pv55gYrg8vCmwKNZnzam_W4KjY6JxbSM2W0E4Tj/pub?output=csv" },
+        { name: "Step 2", desc: "Community Kickoff Meeting", color: "#ACDBB0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTnYrjWo0CCwhgbPCqHMCOE4td62A9zdq97d6zkDNlFaSSC0je1ID5qCfZ0gUxly_FeDg06NYbjBhH/pub?output=csv" },
+        { name: "Step 3", desc: "Raise $500", color: "#25DB20", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5F0lL2gP5fujfLazuAAu6-HyTTdH_APQ53BXOygvz5QxZUbPmibFCLVZkLqTmj1bp1dDy5X7hJ-se/pub?output=csv" },
+        { name: "Step 4", desc: "Form Local Steering Committee", color: "#00FFA0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj-xjmLdJ9Uemt4tdbtbr75QNZVp5C19dYNiKkocutLxA4oHjeiwYjVNoDrXS278WWGKITZ0mCWzDw/pub?output=csv" },
+        { name: "Step 5", desc: "Draft A Plan", color: "#B0A122", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vReQNENdd47Fj4WRl-56WH1RzfOS_ZMMsD3zIlRMzLRnrxnUEdazAt7jrL--u3E6sSL3dfkiBKqlxU7/pub?output=csv" },
+        { name: "Step 6", desc: "Obtain School Approval", color: "#FFCB00", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyKG0veTaCk1pgKISO-qJonQLYZBxYprsHpt9j_Hh64L0XzZJk8IvZ6znEf2_YsgtKMbWOSsskkG8e/pub?output=csv" },
+        { name: "Step 7", desc: "Recruit Your Team", color: "#FFD0A2", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTotWVs9_F99p8CO-JA18RrnAhUXLbAM-C--2tMh-Xp9aShvwO6fJAO80J7rIs8WrbpyVmdF7FojsyG/pub?output=csv" },
+        { name: "Step 8", desc: "Train Your Team", color: "#FC80FF", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRycSZF-EW5KiNHdqBbAlSj8fcvU8IGdfej7Iwr4iYQNGJko_OlaAD67SECzfN0od_Q5BKJekwg2Pa8/pub?output=csv" },
+        { name: "Step 9", desc: "Execute Your Plan", color: "#FA5188", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzWNJx52SA-lsyLtOAfw-KZmw3x7vvbmWvp6D670GEgpbaitB8ylH9zKV1Xwc_76niUvuKIgDRlUUB/pub?output=csv" },
+        { name: "Step 10", desc: "Live LifeWise Program", color: "#FF0004", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_UXNj1Uc9qQOD8e0Bou-eFkzLHYY0rPQEgaRnlfBoXMxE_ZmW29gK46Dgvf1tz8qbMl2-MbyoYHKp/pub?output=csv" },
+        { name: "Step 11", desc: "Mature LifeWise Program", color: "#420102", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIEKicXubtMmQ2HgDKNqITU-M_6WtG6Agqv44XLGbPLNckcZuM8q7P9eQIKf3-QadEkoLtARW7M2LJ/pub?output=csv" }
+    ];
 
-        sheets.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    // 3. Setup Legend and Layers
+    sheets.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    const layerControl = L.control.layers(null, null, { collapsed: false, position: 'bottomright' }).addTo(map);
 
-        const layerControl = L.control.layers(null, null, { collapsed: false, position: 'bottomright' }).addTo(map);
+    sheets.forEach(sheet => {
+        sheet.layerGroup = L.layerGroup().addTo(map);
+        sheetCounts[sheet.name] = 0;
+        const label = `<b style="color:${sheet.color}">${sheet.name}</b> <span id="count-${sheet.name.replace(/\s+/g, '')}" class="marker-count">(...)</span><span class="layer-desc">${sheet.desc}</span>`;
+        layerControl.addOverlay(sheet.layerGroup, label);
+    });
 
-        // Pre-initialize layer groups and legend
-        sheets.forEach(sheet => {
-            sheet.layerGroup = L.layerGroup().addTo(map);
-            sheetCounts[sheet.name] = 0;
-            const label = `<b style="color:${sheet.color}">${sheet.name}</b> <span id="count-${sheet.name.replace(/\s+/g, '')}" class="marker-count">(...)</span><span class="layer-desc">${sheet.desc}</span>`;
-            layerControl.addOverlay(sheet.layerGroup, label);
-        });
+    // 4. Load Data Function
+    async function loadSheet(sheet, specificUrl) {
+        const urlToUse = specificUrl || sheet.url;
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(urlToUse);
+        try {
+            const response = await fetch(proxyUrl);
+            const csvText = await response.text();
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    results.data.forEach(row => {
+                        const latKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LAT');
+                        const lonKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LON');
+                        const lat = parseFloat(row[latKey]);
+                        const lon = parseFloat(row[lonKey]);
 
-        async function loadSheet(sheet, specificUrl) {
-            const urlToUse = specificUrl || sheet.url;
-            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(urlToUse);
-            try {
-                const response = await fetch(proxyUrl);
-                const csvText = await response.text();
-                Papa.parse(csvText, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        results.data.forEach(row => {
-                            // FUZZY HEADER FIX: Handles " LAT" or "lat" or "LON "
-                            const latKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LAT');
-                            const lonKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LON');
+                        if (!isNaN(lat) && !isNaN(lon)) {
+                            sheetCounts[sheet.name]++;
+                            let table = `<table class="popup-table" style="font-size:12px; border-collapse:collapse; width:100%;">`;
+                            for (let key in row) { if (row[key]) table += `<tr><td style="border-bottom:1px solid #eee; padding:3px;"><b>${key}</b></td><td style="border-bottom:1px solid #eee; padding:3px;">${row[key]}</td></tr>`; }
+                            table += `</table>`;
 
-                            const lat = parseFloat(row[latKey]);
-                            const lon = parseFloat(row[lonKey]);
+                            const dot = L.circleMarker([lat, lon], {
+                                radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8
+                            }).bindPopup(table);
 
-                            if (!isNaN(lat) && !isNaN(lon)) {
-                                sheetCounts[sheet.name]++;
-                                let table = `<table class="popup-table">`;
-                                for (let key in row) { if (row[key]) table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`; }
-                                table += `</table>`;
-                                const dot = L.circleMarker([lat, lon], {
-                                    radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8
-                                }).bindPopup(table);
-                                dot.addTo(sheet.layerGroup);
-                                dot.addTo(markerGroup);
-                                allMarkers.push({ marker: dot, rowData: row, layerName: sheet.name, fullString: Object.values(row).join(" ").toLowerCase() });
-                            }
-                        });
-                        const countEl = document.getElementById(`count-${sheet.name.replace(/\s+/g, '')}`);
-                        if (countEl) countEl.innerHTML = `(${sheetCounts[sheet.name]})`;
-                        if(markerGroup.getBounds().isValid()) map.fitBounds(markerGroup.getBounds(), {padding:[50,50]});
-                    }
-                });
-            } catch (e) { console.error("Error loading sheet:", e); }
-        }
-
-        // START LOADING
-        sheets.forEach(sheet => {
-            if (sheet.urls) {
-                // If multiple URLs (Step 0)
-                sheet.urls.forEach(url => loadSheet(sheet, url));
-            } else {
-                // Single URL
-                loadSheet(sheet);
-            }
-        });
-
-        // UI Listeners
-        document.getElementById('btnSearch').addEventListener('click', function() {
-            const query = document.getElementById('mapSearch').value.toLowerCase().trim();
-            const list = document.getElementById('resultsList');
-            list.innerHTML = "";
-            if (!query) return;
-            const matches = allMarkers.filter(m => m.fullString.includes(query));
-            matches.forEach(m => {
-                const li = document.createElement('li');
-                li.className = 'result-item';
-                li.innerHTML = `<b>${Object.values(m.rowData)[0]}</b><br><small>${m.layerName}</small>`;
-                li.onclick = () => { map.flyTo(m.marker.getLatLng(), 15); m.marker.openPopup(); };
-                list.appendChild(li);
+                            dot.addTo(sheet.layerGroup);
+                            dot.addTo(markerGroup);
+                            allMarkers.push({ marker: dot, rowData: row, layerName: sheet.name, fullString: Object.values(row).join(" ").toLowerCase() });
+                        }
+                    });
+                    const countEl = document.getElementById(`count-${sheet.name.replace(/\s+/g, '')}`);
+                    if (countEl) countEl.innerHTML = `(${sheetCounts[sheet.name]})`;
+                   // Removed auto-zoom to allow the map to stay centered on the USA initially.
+                }
             });
-        });
+        } catch (e) { console.error("Error loading sheet:", e); }
+    }
 
-        document.getElementById('btnReset').addEventListener('click', () => {
-            if(markerGroup.getBounds().isValid()) map.fitBounds(markerGroup.getBounds());
+    // 5. Run Loading & Timestamps
+    function setLastUpdated() {
+        const now = new Date();
+        const dateString = now.toLocaleDateString();
+        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('last-updated').innerHTML = `? Live Data: Updated ${dateString} at ${timeString}`;
+    }
+
+    sheets.forEach(sheet => {
+        if (sheet.urls) { sheet.urls.forEach(url => loadSheet(sheet, url)); }
+        else { loadSheet(sheet); }
+    });
+    setLastUpdated();
+
+    // 6. UI Listeners
+    document.getElementById('btnSearch').addEventListener('click', function() {
+        const query = document.getElementById('mapSearch').value.toLowerCase().trim();
+        const list = document.getElementById('resultsList');
+        list.innerHTML = "";
+        if (!query) return;
+        const matches = allMarkers.filter(m => m.fullString.includes(query));
+        matches.forEach(m => {
+            const li = document.createElement('li');
+            li.className = 'result-item';
+            li.innerHTML = `<b>${Object.values(m.rowData)[0]}</b><br><small>${m.layerName}</small>`;
+            li.onclick = () => { map.flyTo(m.marker.getLatLng(), 15); m.marker.openPopup(); };
+            list.appendChild(li);
         });
-    </script>
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+        if(markerGroup.getBounds().isValid()) map.fitBounds(markerGroup.getBounds());
+    });
+</script>
 </body>
 </html>
