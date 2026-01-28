@@ -2,16 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>LifeWise Program Map | Secular Education Association</title>
-
+    
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1">
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+    
     <meta name="description" content="Secular Education Association LifeWise Academy Map. View program progress, signature counts, and district status across the USA.">
     <meta name="keywords" content="LifeWise, LifeWise map, Secular Education Association, SEA, signature tracking, Christian Nationalism">
-
+    
     <meta property="og:title" content="LifeWise Program Map">
     <meta property="og:description" content="Tracking community implementation and program maturity in real-time.">
     <meta property="og:url" content="http://map.seculareducationassociation.org">
@@ -19,20 +18,26 @@
     <meta property="og:image" content="http://map.seculareducationassociation.org/mapshot.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-
+    
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="LifeWise Program Map">
     <meta name="twitter:image" content="http://map.seculareducationassociation.org/mapshot.jpg">
 
     <style>
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; height: 100vh; overflow: hidden; width: 100vw; }
         #sidebar { width: 320px; background: #fff; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 1001; }
         .logo-container { padding: 15px; text-align: center; border-bottom: 1px solid #eee; background: #fafafa; }
         .company-logo { max-width: 130px; height: auto; margin-bottom: 10px; cursor: pointer; }
         #map { flex-grow: 1; position: relative; height: 100%; background: #f0f0f0; }
 
         /* Legend & Layer Styles */
-        .leaflet-control-layers { max-width: 250px; font-size: 11px !important; background: rgba(255, 255, 255, 0.9) !important; box-shadow: 0 0 15px rgba(0,0,0,0.2) !important; border-radius: 8px !important; }
+        .leaflet-control-layers { 
+            max-width: 250px; 
+            font-size: 11px !important; 
+            background: rgba(255, 255, 255, 0.9) !important; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.2) !important; 
+            border-radius: 8px !important; 
+        }
         .layer-desc { display: block; font-size: 9px; color: #777; margin-left: 22px; line-height: 1.1; }
         .marker-count { color: #007bff; font-weight: bold; }
 
@@ -48,7 +53,7 @@
         .search-box { width: 100%; padding: 8px; border-radius: 20px; border: 1px solid #ccc; outline: none; box-sizing: border-box; }
         .btn-group { display: flex; gap: 5px; margin-top: 10px; }
         button { flex: 1; padding: 8px; border-radius: 20px; border: none; color: white; cursor: pointer; font-size: 11px; font-weight: bold; }
-
+        
         #resultsList { flex-grow: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; }
         .result-item { padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; transition: background 0.2s; }
         .result-item:hover { background: #f9f9f9; }
@@ -63,7 +68,15 @@
             body { flex-direction: column; }
             #sidebar { width: 100%; height: auto; max-height: 45%; border-right: none; }
             #map { width: 100%; flex-grow: 1; }
-            .leaflet-control-layers { margin-bottom: 35px !important; }
+            
+            /* LEGEND MOBILE FIX */
+            .leaflet-control-layers { 
+                max-height: 180px !important; 
+                overflow-y: auto !important; 
+                width: 160px;
+                margin-bottom: 35px !important; 
+            }
+            .layer-desc { display: none; } /* Hide descriptions on mobile to save space */
         }
     </style>
 </head>
@@ -77,7 +90,7 @@
         <div class="sidebar-intro">
             <p>The SEA LifeWise Program Map tracks implementation across school districts nationwide. LifeWise uses an 11-step process to bring religious instruction into public schools. Stay informed and protect your community.</p>
             <a href="https://seculareducationassociation.org/lifewise-launch-process/" target="_blank" class="info-link">What Do These Steps Mean?</a>
-            <div id="last-updated" class="update-badge">? Live Data...</div>
+            <div id="last-updated" class="update-badge">● Live Data...</div>
             <div class="share-container">
                 <span>Share:</span>
                 <a href="https://www.facebook.com/sharer/sharer.php?u=http://map.seculareducationassociation.org/" target="_blank" class="share-btn fb">Facebook</a>
@@ -102,17 +115,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
 <script>
-    // 1. Initialize Map - Center on USA
-    const map = L.map('map').setView([39.5, -98.0], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '� OpenStreetMap'
+    // 1. Initialize Map - USA Center
+    const isMobile = window.innerWidth < 768;
+    const map = L.map('map').setView([39.5, -98.0], isMobile ? 3 : 4);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+        attribution: '© OpenStreetMap' 
     }).addTo(map);
 
     const allMarkers = [];
     const markerGroup = L.featureGroup().addTo(map);
     const sheetCounts = {};
 
-    // 2. Sheet Data Configuration
+    // 2. Data Config
     let sheets = [
         { name: "Step 0", desc: "Under 10 Signatures", color: "#ABABAB", urls: [
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMii-mD_nfqLN4g6LkP1T2D8qFD2VE2KhEpsDMo8P5JqELjYzAzQmna7EFqLkgZL4MqbVq9QzBRyQW/pub?output=csv",
@@ -134,7 +149,7 @@
         { name: "Step 11", desc: "Mature LifeWise Program", color: "#420102", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIEKicXubtMmQ2HgDKNqITU-M_6WtG6Agqv44XLGbPLNckcZuM8q7P9eQIKf3-QadEkoLtARW7M2LJ/pub?output=csv" }
     ];
 
-    // 3. Legend & Layers Sorting
+    // 3. Legend Config
     sheets.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
     const layerControl = L.control.layers(null, null, { collapsed: false, position: 'bottomright' }).addTo(map);
 
@@ -146,7 +161,7 @@
         layerControl.addOverlay(sheet.layerGroup, labelHtml);
     });
 
-    // 4. Load Data Function
+    // 4. Data Loading
     async function loadSheet(sheet, specificUrl) {
         const urlToUse = specificUrl || sheet.url;
         const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(urlToUse);
@@ -182,13 +197,13 @@
                     if (countEl) countEl.innerHTML = `(${sheetCounts[sheet.name]})`;
                 }
             });
-        } catch (e) { console.error("Error loading sheet:", e); }
+        } catch (e) { console.error("Error:", e); }
     }
 
-    // 5. Initial Load & TimeStamp
+    // 5. Execution
     function setLastUpdated() {
         const now = new Date();
-        document.getElementById('last-updated').innerHTML = `? Live Data: Updated ${now.toLocaleDateString()} at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        document.getElementById('last-updated').innerHTML = `● Live Data: Updated ${now.toLocaleDateString()} at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     }
 
     sheets.forEach(sheet => {
@@ -197,7 +212,7 @@
     });
     setLastUpdated();
 
-    // 6. UI Interaction
+    // 6. UI
     document.getElementById('btnSearch').addEventListener('click', function() {
         const query = document.getElementById('mapSearch').value.toLowerCase().trim();
         const list = document.getElementById('resultsList');
