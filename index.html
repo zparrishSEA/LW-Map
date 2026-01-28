@@ -8,11 +8,11 @@
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <meta name="description" content="Secular Education Association LifeWise Academy Map. View program progress, signature counts, and district status across the USA.">
-    <meta name="keywords" content="LifeWise, LifeWise map, Secular Education Association, SEA, signature tracking, Christian Nationalism">
-    
+    <meta name="description" content="Secular Education Association LifeWise Academy Map. View program progress, signature counts, employee info, and district status across the USA.">
+    <meta name="keywords" content="LifeWise, LifeWise map, map, community impact, district status, signature tracking, SEA, Secular Education Association">
+
     <meta property="og:title" content="LifeWise Program Map">
-    <meta property="og:description" content="Tracking community implementation and program maturity in real-time.">
+    <meta property="og:description" content="Tracking community infiltration and program maturity in real-time.">
     <meta property="og:url" content="http://map.seculareducationassociation.org">
     <meta property="og:type" content="website">
     <meta property="og:image" content="http://map.seculareducationassociation.org/mapshot.jpg">
@@ -25,12 +25,24 @@
 
     <style>
         body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; height: 100vh; overflow: hidden; width: 100vw; }
-        #sidebar { width: 320px; background: #fff; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 1001; }
-        .logo-container { padding: 15px; text-align: center; border-bottom: 1px solid #eee; background: #fafafa; }
+        
+        /* Sidebar Scroll Fix */
+        #sidebar { 
+            width: 320px; 
+            background: #fff; 
+            border-right: 1px solid #ccc; 
+            display: flex; 
+            flex-direction: column; 
+            z-index: 1001; 
+            height: 100vh;
+            overflow-y: auto; 
+        }
+
+        .logo-container { padding: 15px; text-align: center; border-bottom: 1px solid #eee; background: #fafafa; flex-shrink: 0; }
         .company-logo { max-width: 130px; height: auto; margin-bottom: 10px; cursor: pointer; }
         #map { flex-grow: 1; position: relative; height: 100%; background: #f0f0f0; }
 
-        /* Legend & Layer Styles */
+        /* Legend Style */
         .leaflet-control-layers { 
             max-width: 250px; 
             font-size: 11px !important; 
@@ -42,41 +54,60 @@
         .marker-count { color: #007bff; font-weight: bold; }
 
         /* Sidebar Content */
-        .sidebar-intro { padding: 0 15px 15px 15px; text-align: left; overflow-y: auto; }
+        .sidebar-intro { padding: 0 15px 15px 15px; text-align: left; }
         .sidebar-intro p { font-size: 12.5px; color: #444; line-height: 1.5; margin-bottom: 12px; }
-        .info-link { display: inline-block; font-size: 12px; color: #007bff; text-decoration: none; font-weight: bold; border: 1px solid #007bff; padding: 6px 10px; border-radius: 5px; transition: all 0.2s ease; margin-bottom: 10px; }
+        .info-link { display: inline-block; font-size: 12px; color: #007bff; text-decoration: none; font-weight: bold; border: 1px solid #007bff; padding: 6px 10px; border-radius: 5px; margin-bottom: 10px; }
         .info-link:hover { background: #007bff; color: #fff; }
 
         .update-badge { font-size: 10px; color: #28a745; background: #eaffed; display: inline-block; padding: 3px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #c3e6cb; margin-bottom: 10px; }
 
-        .sidebar-header { padding: 15px; border-bottom: 1px solid #eee; background: #fff; }
+        .sidebar-header { padding: 15px; border-bottom: 1px solid #eee; background: #fff; flex-shrink: 0; }
         .search-box { width: 100%; padding: 8px; border-radius: 20px; border: 1px solid #ccc; outline: none; box-sizing: border-box; }
         .btn-group { display: flex; gap: 5px; margin-top: 10px; }
         button { flex: 1; padding: 8px; border-radius: 20px; border: none; color: white; cursor: pointer; font-size: 11px; font-weight: bold; }
         
-        #resultsList { flex-grow: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; }
-        .result-item { padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; transition: background 0.2s; }
-        .result-item:hover { background: #f9f9f9; }
+        #resultsList { list-style: none; padding: 0; margin: 0; }
+        .result-item { padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
 
         .share-container { margin-top: 15px; font-size: 11px; color: #666; display: flex; align-items: center; gap: 8px; border-top: 1px solid #eee; padding-top: 15px; }
-        .share-btn { padding: 4px 10px; border-radius: 4px; text-decoration: none; color: white; font-weight: bold; }
+        .share-btn { padding: 4px 10px; border-radius: 4px; text-decoration: none; color: white; font-weight: bold; transition: opacity 0.2s; }
         .fb { background-color: #1877F2; }
         .tw { background-color: #000; }
 
-        /* Mobile Optimization */
+        /* ADVANCED MOBILE & LANDSCAPE OPTIMIZATION */
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            #sidebar { width: 100%; height: auto; max-height: 45%; border-right: none; }
+            #sidebar { 
+                width: 100%; 
+                height: auto; 
+                max-height: 40vh; 
+                border-right: none; 
+                border-bottom: 1px solid #ccc;
+            }
             #map { width: 100%; flex-grow: 1; }
             
-            /* LEGEND MOBILE FIX */
+            /* Compact Mobile Legend Fix */
             .leaflet-control-layers { 
-                max-height: 180px !important; 
+                max-height: 160px !important; 
                 overflow-y: auto !important; 
-                width: 160px;
-                margin-bottom: 35px !important; 
+                width: 140px;
+                font-size: 10px !important;
             }
-            .layer-desc { display: none; } /* Hide descriptions on mobile to save space */
+            .layer-desc { display: none; }
+        }
+
+        /* Landscape Phone Fix */
+        @media (max-width: 900px) and (orientation: landscape) {
+            body { flex-direction: row; }
+            #sidebar { 
+                width: 260px; 
+                height: 100vh; 
+                max-height: 100vh; 
+            }
+            #map { flex-grow: 1; }
+            .leaflet-control-layers { 
+                max-height: 100px !important; 
+            }
         }
     </style>
 </head>
@@ -88,13 +119,12 @@
             <img src="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1" alt="SEA Logo" class="company-logo">
         </a>
         <div class="sidebar-intro">
-            <p>The SEA LifeWise Program Map tracks implementation across school districts nationwide. LifeWise uses an 11-step process to bring religious instruction into public schools. Stay informed and protect your community.</p>
+            <p>Secular Education Association's LifeWise Program Map tracks implementation across school districts nationwide. LifeWise uses an 11-step process to bring religious instruction franchise into public schools. Find your district, stay informed and protect your community from the invasion of Christian Nationalism.</p>
             <a href="https://seculareducationassociation.org/lifewise-launch-process/" target="_blank" class="info-link">What Do These Steps Mean?</a>
             <div id="last-updated" class="update-badge">● Live Data...</div>
             <div class="share-container">
-                <span>Share:</span>
                 <a href="https://www.facebook.com/sharer/sharer.php?u=http://map.seculareducationassociation.org/" target="_blank" class="share-btn fb">Facebook</a>
-                <a href="https://twitter.com/intent/tweet?text=Check the LifeWise Program Map by Secular Education Association&url=http://map.seculareducationassociation.org/" target="_blank" class="share-btn tw">X</a>
+                <a href="https://twitter.com/intent/tweet?text=Protect your community from Christian Nationalism with Secular Education Association's LifeWise Program Map!&url=http://map.seculareducationassociation.org/" target="_blank" class="share-btn tw">X</a>
             </div>
         </div>
     </div>
@@ -115,13 +145,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
 <script>
-    // 1. Initialize Map - USA Center
+    // 1. Initialize Map
     const isMobile = window.innerWidth < 768;
     const map = L.map('map').setView([39.5, -98.0], isMobile ? 3 : 4);
     
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-        attribution: '© OpenStreetMap' 
-    }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
     const allMarkers = [];
     const markerGroup = L.featureGroup().addTo(map);
@@ -137,28 +165,31 @@
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vQN6RMquGyImew2ZpR_-k-habAJSR0bgJO58Q3FhSgMaJdavS_QTVJjnnhXyUpRq8_t1QVpnmsFx8ig/pub?output=csv"
         ]},
         { name: "Step 1", desc: "10-50 Signatures", color: "#2E85DB", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTzJpeI6tIzbJ2EEs7hXP5AB0y2-Y0xZtvtZQu7Pv55gYrg8vCmwKNZnzam_W4KjY6JxbSM2W0E4Tj/pub?output=csv" },
-        { name: "Step 2", desc: "Community Kickoff Meeting", color: "#ACDBB0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTnYrjWo0CCwhgbPCqHMCOE4td62A9zdq97d6zkDNlFaSSC0je1ID5qCfZ0gUxly_FeDg06NYbjBhH/pub?output=csv" },
+        { name: "Step 2", desc: "Kickoff Meeting", color: "#ACDBB0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTnYrjWo0CCwhgbPCqHMCOE4td62A9zdq97d6zkDNlFaSSC0je1ID5qCfZ0gUxly_FeDg06NYbjBhH/pub?output=csv" },
         { name: "Step 3", desc: "Raise $500", color: "#25DB20", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5F0lL2gP5fujfLazuAAu6-HyTTdH_APQ53BXOygvz5QxZUbPmibFCLVZkLqTmj1bp1dDy5X7hJ-se/pub?output=csv" },
-        { name: "Step 4", desc: "Form Local Steering Committee", color: "#00FFA0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj-xjmLdJ9Uemt4tdbtbr75QNZVp5C19dYNiKkocutLxA4oHjeiwYjVNoDrXS278WWGKITZ0mCWzDw/pub?output=csv" },
-        { name: "Step 5", desc: "Draft A Plan", color: "#B0A122", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vReQNENdd47Fj4WRl-56WH1RzfOS_ZMMsD3zIlRMzLRnrxnUEdazAt7jrL--u3E6sSL3dfkiBKqlxU7/pub?output=csv" },
-        { name: "Step 6", desc: "Obtain School Approval", color: "#FFCB00", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyKG0veTaCk1pgKISO-qJonQLYZBxYprsHpt9j_Hh64L0XzZJk8IvZ6znEf2_YsgtKMbWOSsskkG8e/pub?output=csv" },
-        { name: "Step 7", desc: "Recruit Your Team", color: "#FFD0A2", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTotWVs9_F99p8CO-JA18RrnAhUXLbAM-C--2tMh-Xp9aShvwO6fJAO80J7rIs8WrbpyVmdF7FojsyG/pub?output=csv" },
-        { name: "Step 8", desc: "Train Your Team", color: "#FC80FF", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRycSZF-EW5KiNHdqBbAlSj8fcvU8IGdfej7Iwr4iYQNGJko_OlaAD67SECzfN0od_Q5BKJekwg2Pa8/pub?output=csv" },
-        { name: "Step 9", desc: "Execute Your Plan", color: "#FA5188", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzWNJx52SA-lsyLtOAfw-KZmw3x7vvbmWvp6D670GEgpbaitB8ylH9zKV1Xwc_76niUvuKIgDRlUUB/pub?output=csv" },
-        { name: "Step 10", desc: "Live LifeWise Program", color: "#FF0004", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_UXNj1Uc9qQOD8e0Bou-eFkzLHYY0rPQEgaRnlfBoXMxE_ZmW29gK46Dgvf1tz8qbMl2-MbyoYHKp/pub?output=csv" },
-        { name: "Step 11", desc: "Mature LifeWise Program", color: "#420102", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIEKicXubtMmQ2HgDKNqITU-M_6WtG6Agqv44XLGbPLNckcZuM8q7P9eQIKf3-QadEkoLtARW7M2LJ/pub?output=csv" }
+        { name: "Step 4", desc: "Form Committee", color: "#00FFA0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj-xjmLdJ9Uemt4tdbtbr75QNZVp5C19dYNiKkocutLxA4oHjeiwYjVNoDrXS278WWGKITZ0mCWzDw/pub?output=csv" },
+        { name: "Step 5", desc: "Draft Plan", color: "#B0A122", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vReQNENdd47Fj4WRl-56WH1RzfOS_ZMMsD3zIlRMzLRnrxnUEdazAt7jrL--u3E6sSL3dfkiBKqlxU7/pub?output=csv" },
+        { name: "Step 6", desc: "School Approval", color: "#FFCB00", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyKG0veTaCk1pgKISO-qJonQLYZBxYprsHpt9j_Hh64L0XzZJk8IvZ6znEf2_YsgtKMbWOSsskkG8e/pub?output=csv" },
+        { name: "Step 7", desc: "Recruit Team", color: "#FFD0A2", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTotWVs9_F99p8CO-JA18RrnAhUXLbAM-C--2tMh-Xp9aShvwO6fJAO80J7rIs8WrbpyVmdF7FojsyG/pub?output=csv" },
+        { name: "Step 8", desc: "Train Team", color: "#FC80FF", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRycSZF-EW5KiNHdqBbAlSj8fcvU8IGdfej7Iwr4iYQNGJko_OlaAD67SECzfN0od_Q5BKJekwg2Pa8/pub?output=csv" },
+        { name: "Step 9", desc: "Execute Plan", color: "#FA5188", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzWNJx52SA-lsyLtOAfw-KZmw3x7vvbmWvp6D670GEgpbaitB8ylH9zKV1Xwc_76niUvuKIgDRlUUB/pub?output=csv" },
+        { name: "Step 10", desc: "Live Program", color: "#FF0004", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_UXNj1Uc9qQOD8e0Bou-eFkzLHYY0rPQEgaRnlfBoXMxE_ZmW29gK46Dgvf1tz8qbMl2-MbyoYHKp/pub?output=csv" },
+        { name: "Step 11", desc: "Mature Program", color: "#420102", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIEKicXubtMmQ2HgDKNqITU-M_6WtG6Agqv44XLGbPLNckcZuM8q7P9eQIKf3-QadEkoLtARW7M2LJ/pub?output=csv" }
     ];
 
     // 3. Legend Config
     sheets.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-    const layerControl = L.control.layers(null, null, { collapsed: false, position: 'bottomright' }).addTo(map);
+    const layerControl = L.control.layers(null, null, { 
+        collapsed: false, 
+        position: isMobile ? 'topright' : 'bottomright' 
+    }).addTo(map);
 
     sheets.forEach(sheet => {
         sheet.layerGroup = L.layerGroup().addTo(map);
         sheetCounts[sheet.name] = 0;
-        const labelId = `count-${sheet.name.replace(/\s+/g, '')}`;
-        const labelHtml = `<b style="color:${sheet.color}">${sheet.name}</b> <span id="${labelId}" class="marker-count">(...)</span><span class="layer-desc">${sheet.desc}</span>`;
-        layerControl.addOverlay(sheet.layerGroup, labelHtml);
+        const id = `count-${sheet.name.replace(/\s+/g, '')}`;
+        const label = `<b style="color:${sheet.color}">${sheet.name}</b> <span id="${id}" class="marker-count">(...)</span><span class="layer-desc">${sheet.desc}</span>`;
+        layerControl.addOverlay(sheet.layerGroup, label);
     });
 
     // 4. Data Loading
@@ -169,27 +200,19 @@
             const response = await fetch(proxyUrl);
             const csvText = await response.text();
             Papa.parse(csvText, {
-                header: true,
-                skipEmptyLines: true,
+                header: true, skipEmptyLines: true,
                 complete: function(results) {
                     results.data.forEach(row => {
                         const latKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LAT');
                         const lonKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LON');
-                        const lat = parseFloat(row[latKey]);
-                        const lon = parseFloat(row[lonKey]);
-
+                        const lat = parseFloat(row[latKey]); const lon = parseFloat(row[lonKey]);
                         if (!isNaN(lat) && !isNaN(lon)) {
                             sheetCounts[sheet.name]++;
-                            let table = `<div style="max-height:150px; overflow-y:auto;"><table style="font-size:12px; border-collapse:collapse; width:100%;">`;
-                            for (let key in row) { if (row[key]) table += `<tr><td style="border-bottom:1px solid #eee; padding:3px;"><b>${key}</b></td><td style="border-bottom:1px solid #eee; padding:3px;">${row[key]}</td></tr>`; }
+                            let table = `<div style="max-height:150px; overflow-y:auto;"><table style="font-size:12px; width:100%;">`;
+                            for (let key in row) { if (row[key]) table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`; }
                             table += `</table></div>`;
-
-                            const dot = L.circleMarker([lat, lon], {
-                                radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8
-                            }).bindPopup(table);
-
-                            dot.addTo(sheet.layerGroup);
-                            dot.addTo(markerGroup);
+                            const dot = L.circleMarker([lat, lon], { radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8 }).bindPopup(table);
+                            dot.addTo(sheet.layerGroup); dot.addTo(markerGroup);
                             allMarkers.push({ marker: dot, rowData: row, layerName: sheet.name, fullString: Object.values(row).join(" ").toLowerCase() });
                         }
                     });
@@ -197,7 +220,7 @@
                     if (countEl) countEl.innerHTML = `(${sheetCounts[sheet.name]})`;
                 }
             });
-        } catch (e) { console.error("Error:", e); }
+        } catch (e) { console.error(e); }
     }
 
     // 5. Execution
@@ -216,12 +239,10 @@
     document.getElementById('btnSearch').addEventListener('click', function() {
         const query = document.getElementById('mapSearch').value.toLowerCase().trim();
         const list = document.getElementById('resultsList');
-        list.innerHTML = "";
-        if (!query) return;
+        list.innerHTML = ""; if (!query) return;
         const matches = allMarkers.filter(m => m.fullString.includes(query));
         matches.forEach(m => {
-            const li = document.createElement('li');
-            li.className = 'result-item';
+            const li = document.createElement('li'); li.className = 'result-item';
             li.innerHTML = `<b>${Object.values(m.rowData)[0]}</b><br><small>${m.layerName}</small>`;
             li.onclick = () => { map.flyTo(m.marker.getLatLng(), 15); m.marker.openPopup(); };
             list.appendChild(li);
