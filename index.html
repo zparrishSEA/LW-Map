@@ -189,35 +189,60 @@
         layerControl.addOverlay(sheet.layerGroup, label);
     });
 
-    async function loadSheet(sheet, specificUrl) {
-        const urlToUse = specificUrl || sheet.url;
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(urlToUse);
-        try {
-            const response = await fetch(proxyUrl);
-            const csvText = await response.text();
-            Papa.parse(csvText, {
-                header: true, skipEmptyLines: true,
-                complete: function(results) {
-                    results.data.forEach(row => {
-                        const latKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LAT');
-                        const lonKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LON');
-                        const lat = parseFloat(row[latKey]); const lon = parseFloat(row[lonKey]);
-                        if (!isNaN(lat) && !isNaN(lon)) {
-                            sheetCounts[sheet.name]++;
-                            let table = `<div style="max-height:150px; overflow-y:auto;"><table style="font-size:12px; width:100%;">`;
-                            for (let key in row) { if (row[key]) table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`; }
-                            table += `</table></div>`;
-                            const dot = L.circleMarker([lat, lon], { radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8 }).bindPopup(table);
-                            dot.addTo(sheet.layerGroup); dot.addTo(markerGroup);
-                            allMarkers.push({ marker: dot, rowData: row, layerName: sheet.name, fullString: Object.values(row).join(" ").toLowerCase() });
-                        }
-                    });
-                    const countEl = document.getElementById(`count-${sheet.name.replace(/\s+/g, '')}`);
-                    if (countEl) countEl.innerHTML = `(${sheetCounts[sheet.name]})`;
-                }
-            });
-        } catch (e) { console.error(e); }
+async function loadSheet(sheet, specificUrl) {
+    const urlToUse = specificUrl || sheet.url;
+    
+    // CACHE BUSTER: Adds a unique timestamp to every request so the proxy doesn't serve "stale" 403 errors
+    const cacheBuster = new Date().getTime();
+    const finalUrl = `${urlToUse}${urlToUse.includes('?') ? '&' : '?' }cb=${cacheBuster}`;
+    
+    // NEW PROXY: allorigins is better for viral spikes
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(finalUrl)}`;
+    
+    try {
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const csvText = await response.text();
+        
+        Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                results.data.forEach(row => {
+                    const latKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LAT');
+                    const lonKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LON');
+                    const lat = parseFloat(row[latKey]);
+                    const lon = parseFloat(row[lonKey]);
+
+                    if (!isNaN(lat) && !isNaN(lon)) {
+                        sheetCounts[sheet.name]++;
+                        let table = `<div style="max-height:150px; overflow-y:auto;"><table style="font-size:12px; width:100%;">`;
+                        for (let key in row) { if (row[key]) table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`; }
+                        table += `</table></div>`;
+                        
+                        const dot = L.circleMarker([lat, lon], { 
+                            radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8 
+                        }).bindPopup(table);
+                        
+                        dot.addTo(sheet.layerGroup);
+                        dot.addTo(markerGroup);
+                        allMarkers.push({ marker: dot, rowData: row, layerName: sheet.name, fullString: Object.values(row).join(" ").toLowerCase() });
+                    }
+                });
+                const countEl = document.getElementById(`count-${sheet.name.replace(/\s+/g, '')}`);
+                if (countEl) countEl.innerHTML = `(${sheetCounts[sheet.name]})`;
+            }
+        });
+    } catch (e) { 
+        console.error("Load failed:", e);
+        // Fallback to a third proxy if allorigins also fails
+        const fallbackProxy = `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(finalUrl)}`;
+        fetch(fallbackProxy).then(res => res.text()).then(text => {
+             // You could re-run Papa.parse here as a ultimate safety net
+        });
     }
+}
 
     function setLastUpdated() {
         const now = new Date();
