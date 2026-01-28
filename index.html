@@ -39,7 +39,36 @@
             #map { width: 100%; flex-grow: 1; }
             .leaflet-control-layers { margin-bottom: 30px !important; }
         }
+        .share-container {
+    margin-top: 15px;
+    font-size: 11px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.share-btn {
+    padding: 4px 10px;
+    border-radius: 4px;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    transition: opacity 0.2s;
+}
+
+.share-btn:hover { opacity: 0.8; }
+
+.fb { background-color: #1877F2; } /* Facebook Blue */
+.tw { background-color: #000000; } /* X Black */
     </style>
+    <meta name="description" content="Secular Education Association LifeWise Academy Map. View program progress, signature counts, employee info, and district status across the USA.">
+<meta name="keywords" content="LifeWise, LifeWise map, map, community impact, district status, signature tracking, SEA, Secular Education Association">
+
+<meta property="og:title" content="LifeWise Program Map">
+<meta property="og:description" content="Tracking community infiltration and program maturity in real-time.">
+<meta property="og:image" content="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1"> 
+<meta property="og:url" content="https://map.seculareducationassociation.org">
 </head>
 <body>
 
@@ -52,6 +81,11 @@
             <p>Secular Education Association's LifeWise Program Map tracks LifeWise's implementation process in school districts all across the country. LifeWise developed an 11 step launch process with a stated goal of bringing their plug-and-play religious instruction franchise into every one of our nation's public schools. Find your district, stay informed and protect your community from the invasion of Christian Nationalism.</p>
             <a href="https://seculareducationassociation.org/lifewise-launch-process/" target="_blank" class="info-link">What Do These Steps Mean?</a>
             <div id="last-updated" class="update-badge">Live Data...</div>
+            <div class="share-container">
+    <span>Share Map:</span>
+    <a href="https://www.facebook.com/sharer/sharer.php?u=https://map.yourdomain.com" target="_blank" class="share-btn fb">Facebook</a>
+    <a href="https://twitter.com/intent/tweet?text=Check out our live progress on the LifeWise Map!&url=https://map.yourdomain.com" target="_blank" class="share-btn tw">X (Twitter)</a>
+</div>
         </div>
     </div>
 
@@ -190,3 +224,4 @@
 </script>
 </body>
 </html>
+
