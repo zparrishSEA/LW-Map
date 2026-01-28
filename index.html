@@ -192,17 +192,12 @@
 async function loadSheet(sheet, specificUrl) {
     const urlToUse = specificUrl || sheet.url;
     
-    // CACHE BUSTER: Adds a unique timestamp to every request so the proxy doesn't serve "stale" 403 errors
-    const cacheBuster = new Date().getTime();
-    const finalUrl = `${urlToUse}${urlToUse.includes('?') ? '&' : '?' }cb=${cacheBuster}`;
-    
-    // NEW PROXY: allorigins is better for viral spikes
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(finalUrl)}`;
+    // REPLACE THIS LINE with your new Cloudflare Worker URL
+    const yourWorkerUrl = "https://sea-map-proxy.zparrish.workers.dev/"; // Paste yours here
+    const proxyUrl = `${yourWorkerUrl}?url=${encodeURIComponent(urlToUse)}`;
     
     try {
         const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
         const csvText = await response.text();
         
         Papa.parse(csvText, {
@@ -210,6 +205,7 @@ async function loadSheet(sheet, specificUrl) {
             skipEmptyLines: true,
             complete: function(results) {
                 results.data.forEach(row => {
+                    // ... (rest of your marker logic stays exactly the same)
                     const latKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LAT');
                     const lonKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LON');
                     const lat = parseFloat(row[latKey]);
@@ -234,14 +230,7 @@ async function loadSheet(sheet, specificUrl) {
                 if (countEl) countEl.innerHTML = `(${sheetCounts[sheet.name]})`;
             }
         });
-    } catch (e) { 
-        console.error("Load failed:", e);
-        // Fallback to a third proxy if allorigins also fails
-        const fallbackProxy = `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(finalUrl)}`;
-        fetch(fallbackProxy).then(res => res.text()).then(text => {
-             // You could re-run Papa.parse here as a ultimate safety net
-        });
-    }
+    } catch (e) { console.error("Load failed:", e); }
 }
 
     function setLastUpdated() {
