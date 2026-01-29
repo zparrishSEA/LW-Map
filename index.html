@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <meta name="description" content="Secular Education Association LifeWise Academy Map. View program progress, signature counts, and district status across the USA.">
-    <meta name="keywords" content="LifeWise, LifeWise map, LifeWise status, district status, Secular Education Association, SEA, signature tracking, Christian Nationalism">
+    <meta name="keywords" content="LifeWise, LifeWise map, district status, launch process, Secular Education Association, SEA, signature tracking, Christian Nationalism">
 
     <meta property="og:title" content="LifeWise Program Map">
     <meta property="og:description" content="Tracking community implementation and program maturity in real-time.">
@@ -25,30 +25,12 @@
 
     <style>
         body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; height: 100vh; overflow: hidden; width: 100vw; }
-        
-        #sidebar { 
-            width: 320px; 
-            background: #fff; 
-            border-right: 1px solid #ccc; 
-            display: flex; 
-            flex-direction: column; 
-            z-index: 1001; 
-            height: 100vh;
-            overflow-y: auto; 
-        }
-
+        #sidebar { width: 320px; background: #fff; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 1001; height: 100vh; overflow-y: auto; }
         .logo-container { padding: 15px; text-align: center; border-bottom: 1px solid #eee; background: #fafafa; flex-shrink: 0; }
         .company-logo { max-width: 130px; height: auto; margin-bottom: 10px; cursor: pointer; }
         #map { flex-grow: 1; position: relative; height: 100%; background: #f0f0f0; }
 
-        /* Legend Style */
-        .leaflet-control-layers { 
-            max-width: 250px; 
-            font-size: 11px !important; 
-            background: rgba(255, 255, 255, 0.9) !important; 
-            box-shadow: 0 0 15px rgba(0,0,0,0.2) !important; 
-            border-radius: 8px !important; 
-        }
+        .leaflet-control-layers { max-width: 250px; font-size: 11px !important; background: rgba(255, 255, 255, 0.9) !important; box-shadow: 0 0 15px rgba(0,0,0,0.2) !important; border-radius: 8px !important; }
         .layer-desc { display: block; font-size: 9px; color: #777; margin-left: 22px; line-height: 1.1; }
         .marker-count { color: #007bff; font-weight: bold; }
 
@@ -70,40 +52,18 @@
         .fb { background-color: #1877F2; }
         .tw { background-color: #000; }
 
-        /* ADVANCED MOBILE & LANDSCAPE OPTIMIZATION */
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            #sidebar { 
-                width: 100%; 
-                height: auto; 
-                max-height: 40vh; 
-                border-right: none; 
-                border-bottom: 1px solid #ccc;
-            }
+            #sidebar { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid #ccc; }
             #map { width: 100%; flex-grow: 1; }
-            
-            .leaflet-control-layers { 
-                max-height: 160px !important; 
-                overflow-y: auto !important; 
-                width: 140px;
-                font-size: 10px !important;
-            }
+            .leaflet-control-layers { max-height: 160px !important; overflow-y: auto !important; width: 140px; font-size: 10px !important; }
             .layer-desc { display: none; }
         }
 
-        /* LANDSCAPE SPECIFIC FIX */
         @media (max-width: 950px) and (orientation: landscape) {
             body { flex-direction: row; }
-            #sidebar { 
-                width: 250px !important; 
-                height: 100vh !important; 
-                max-height: 100vh !important; 
-            }
-            .leaflet-control-layers { 
-                max-height: 110px !important; 
-                width: 130px !important;
-                margin-top: 10px !important;
-            }
+            #sidebar { width: 250px !important; height: 100vh !important; max-height: 100vh !important; }
+            .leaflet-control-layers { max-height: 110px !important; width: 130px !important; margin-top: 10px !important; }
             .company-logo { max-width: 100px; }
             .sidebar-intro p { font-size: 11px; }
         }
@@ -117,7 +77,7 @@
             <img src="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1" alt="SEA Logo" class="company-logo">
         </a>
         <div class="sidebar-intro">
-            <p>SEA's LifeWise Program Map tracks LifeWise's implementation process in school districts all across the country. LifeWise developed an 11 step launch process with a stated goal of bringing their plug-and-play religious instruction franchise into every one of our nation's public schools. Find your district, stay informed and protect your community from the invasion of Christian Nationalism.</p>
+            <p>SEA's Map tracks LifeWise's implementation process in school districts all across the country. LifeWise developed a launch process with a stated goal of bringing their plug-and-play religious instruction franchise into every public school. Find your district, stay informed and protect your community from the invasion of Christian Nationalism.</p>
             <a href="https://seculareducationassociation.org/lifewise-launch-process/" target="_blank" class="info-link">What Do These Steps Mean?</a>
             <div id="last-updated" class="update-badge">● Live Data...</div>
             <div class="share-container">
@@ -145,7 +105,6 @@
 <script>
     const isMobile = window.innerWidth < 768;
     const map = L.map('map').setView([39.5, -98.0], isMobile ? 3 : 4);
-    
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
     const allMarkers = [];
@@ -153,32 +112,29 @@
     const sheetCounts = {};
 
     let sheets = [
-        { name: "Step 0", desc: "Under 10 Signatures", color: "#ABABAB", urls: [
+        { name: "Step 0", stepNum: 0, desc: "Under 10 Signatures", color: "#ABABAB", urls: [
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMii-mD_nfqLN4g6LkP1T2D8qFD2VE2KhEpsDMo8P5JqELjYzAzQmna7EFqLkgZL4MqbVq9QzBRyQW/pub?output=csv",
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vSn0_v9d45f1-qsbK56zofHPyjVH0NEodOSmuexGt-D0eAEjyhCv_sXh8o11Vo2kzHozXS1mscFQ9Js/pub?output=csv",
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXnmM1UDBJsZT66GmP9C2C9GzTK7pHrKNZn9ZZltQurpfQ3qlyRANWxQWGH5K6fsgwXw0TkXysk_ZJ/pub?output=csv",
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vSaa8gDF6ng1E8YUJ-THYsfHZ4M28y91nGpASy5GHfmfgISsXoP_XmswOEhZeYW8FHVsxzE1gh-Dstf/pub?output=csv",
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vQN6RMquGyImew2ZpR_-k-habAJSR0bgJO58Q3FhSgMaJdavS_QTVJjnnhXyUpRq8_t1QVpnmsFx8ig/pub?output=csv"
         ]},
-        { name: "Step 1", desc: "10-50 Signatures", color: "#2E85DB", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTzJpeI6tIzbJ2EEs7hXP5AB0y2-Y0xZtvtZQu7Pv55gYrg8vCmwKNZnzam_W4KjY6JxbSM2W0E4Tj/pub?output=csv" },
-        { name: "Step 2", desc: "Kickoff Meeting", color: "#ACDBB0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTnYrjWo0CCwhgbPCqHMCOE4td62A9zdq97d6zkDNlFaSSC0je1ID5qCfZ0gUxly_FeDg06NYbjBhH/pub?output=csv" },
-        { name: "Step 3", desc: "Raise $500", color: "#25DB20", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5F0lL2gP5fujfLazuAAu6-HyTTdH_APQ53BXOygvz5QxZUbPmibFCLVZkLqTmj1bp1dDy5X7hJ-se/pub?output=csv" },
-        { name: "Step 4", desc: "Form Committee", color: "#00FFA0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj-xjmLdJ9Uemt4tdbtbr75QNZVp5C19dYNiKkocutLxA4oHjeiwYjVNoDrXS278WWGKITZ0mCWzDw/pub?output=csv" },
-        { name: "Step 5", desc: "Draft Plan", color: "#B0A122", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vReQNENdd47Fj4WRl-56WH1RzfOS_ZMMsD3zIlRMzLRnrxnUEdazAt7jrL--u3E6sSL3dfkiBKqlxU7/pub?output=csv" },
-        { name: "Step 6", desc: "School Approval", color: "#FFCB00", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyKG0veTaCk1pgKISO-qJonQLYZBxYprsHpt9j_Hh64L0XzZJk8IvZ6znEf2_YsgtKMbWOSsskkG8e/pub?output=csv" },
-        { name: "Step 7", desc: "Recruit Team", color: "#FFD0A2", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTotWVs9_F99p8CO-JA18RrnAhUXLbAM-C--2tMh-Xp9aShvwO6fJAO80J7rIs8WrbpyVmdF7FojsyG/pub?output=csv" },
-        { name: "Step 8", desc: "Train Team", color: "#FC80FF", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRycSZF-EW5KiNHdqBbAlSj8fcvU8IGdfej7Iwr4iYQNGJko_OlaAD67SECzfN0od_Q5BKJekwg2Pa8/pub?output=csv" },
-        { name: "Step 9", desc: "Execute Plan", color: "#FA5188", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzWNJx52SA-lsyLtOAfw-KZmw3x7vvbmWvp6D670GEgpbaitB8ylH9zKV1Xwc_76niUvuKIgDRlUUB/pub?output=csv" },
-        { name: "Step 10", desc: "Live Program", color: "#FF0004", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_UXNj1Uc9qQOD8e0Bou-eFkzLHYY0rPQEgaRnlfBoXMxE_ZmW29gK46Dgvf1tz8qbMl2-MbyoYHKp/pub?output=csv" },
-        { name: "Step 11", desc: "Mature Program", color: "#420102", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIEKicXubtMmQ2HgDKNqITU-M_6WtG6Agqv44XLGbPLNckcZuM8q7P9eQIKf3-QadEkoLtARW7M2LJ/pub?output=csv" }
+        { name: "Step 1", stepNum: 1, desc: "10-50 Signatures", color: "#2E85DB", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTzJpeI6tIzbJ2EEs7hXP5AB0y2-Y0xZtvtZQu7Pv55gYrg8vCmwKNZnzam_W4KjY6JxbSM2W0E4Tj/pub?output=csv" },
+        { name: "Step 2", stepNum: 2, desc: "Kickoff Meeting", color: "#ACDBB0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTnYrjWo0CCwhgbPCqHMCOE4td62A9zdq97d6zkDNlFaSSC0je1ID5qCfZ0gUxly_FeDg06NYbjBhH/pub?output=csv" },
+        { name: "Step 3", stepNum: 3, desc: "Raise $500", color: "#25DB20", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5F0lL2gP5fujfLazuAAu6-HyTTdH_APQ53BXOygvz5QxZUbPmibFCLVZkLqTmj1bp1dDy5X7hJ-se/pub?output=csv" },
+        { name: "Step 4", stepNum: 4, desc: "Form Committee", color: "#00FFA0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj-xjmLdJ9Uemt4tdbtbr75QNZVp5C19dYNiKkocutLxA4oHjeiwYjVNoDrXS278WWGKITZ0mCWzDw/pub?output=csv" },
+        { name: "Step 5", stepNum: 5, desc: "Draft Plan", color: "#B0A122", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vReQNENdd47Fj4WRl-56WH1RzfOS_ZMMsD3zIlRMzLRnrxnUEdazAt7jrL--u3E6sSL3dfkiBKqlxU7/pub?output=csv" },
+        { name: "Step 6", stepNum: 6, desc: "School Approval", color: "#FFCB00", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyKG0veTaCk1pgKISO-qJonQLYZBxYprsHpt9j_Hh64L0XzZJk8IvZ6znEf2_YsgtKMbWOSsskkG8e/pub?output=csv" },
+        { name: "Step 7", stepNum: 7, desc: "Recruit Team", color: "#FFD0A2", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTotWVs9_F99p8CO-JA18RrnAhUXLbAM-C--2tMh-Xp9aShvwO6fJAO80J7rIs8WrbpyVmdF7FojsyG/pub?output=csv" },
+        { name: "Step 8", stepNum: 8, desc: "Train Team", color: "#FC80FF", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRycSZF-EW5KiNHdqBbAlSj8fcvU8IGdfej7Iwr4iYQNGJko_OlaAD67SECzfN0od_Q5BKJekwg2Pa8/pub?output=csv" },
+        { name: "Step 9", stepNum: 9, desc: "Execute Plan", color: "#FA5188", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzWNJx52SA-lsyLtOAfw-KZmw3x7vvbmWvp6D670GEgpbaitB8ylH9zKV1Xwc_76niUvuKIgDRlUUB/pub?output=csv" },
+        { name: "Step 10", stepNum: 10, desc: "Live Program", color: "#FF0004", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_UXNj1Uc9qQOD8e0Bou-eFkzLHYY0rPQEgaRnlfBoXMxE_ZmW29gK46Dgvf1tz8qbMl2-MbyoYHKp/pub?output=csv" },
+        { name: "Step 11", stepNum: 11, desc: "Mature Program", color: "#420102", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIEKicXubtMmQ2HgDKNqITU-M_6WtG6Agqv44XLGbPLNckcZuM8q7P9eQIKf3-QadEkoLtARW7M2LJ/pub?output=csv" }
     ];
 
-    sheets.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    sheets.sort((a, b) => a.stepNum - b.stepNum);
     
-    const layerControl = L.control.layers(null, null, { 
-        collapsed: false, 
-        position: (window.innerWidth < 950) ? 'topright' : 'bottomright' 
-    }).addTo(map);
+    const layerControl = L.control.layers(null, null, { collapsed: false, position: (window.innerWidth < 950) ? 'topright' : 'bottomright' }).addTo(map);
 
     sheets.forEach(sheet => {
         sheet.layerGroup = L.layerGroup().addTo(map);
@@ -188,46 +144,46 @@
         layerControl.addOverlay(sheet.layerGroup, label);
     });
 
-async function loadSheet(sheet, specificUrl) {
-    const urlToUse = specificUrl || sheet.url;
-    const yourWorkerUrl = "https://sea-map-proxy.zparrish.workers.dev/"; 
-    const proxyUrl = `${yourWorkerUrl}?url=${encodeURIComponent(urlToUse)}`;
-    
-    try {
-        const response = await fetch(proxyUrl);
-        const csvText = await response.text();
+    async function loadSheet(sheet, specificUrl) {
+        const urlToUse = specificUrl || sheet.url;
+        const yourWorkerUrl = "https://sea-map-proxy.zparrish.workers.dev/"; 
+        const proxyUrl = `${yourWorkerUrl}?url=${encodeURIComponent(urlToUse)}`;
         
-        Papa.parse(csvText, {
-            header: true,
-            skipEmptyLines: true,
-            complete: function(results) {
-                results.data.forEach(row => {
-                    const latKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LAT');
-                    const lonKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LON');
-                    const lat = parseFloat(row[latKey]);
-                    const lon = parseFloat(row[lonKey]);
+        try {
+            const response = await fetch(proxyUrl);
+            const csvText = await response.text();
+            Papa.parse(csvText, {
+                header: true, skipEmptyLines: true,
+                complete: function(results) {
+                    results.data.forEach(row => {
+                        const latKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LAT');
+                        const lonKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LON');
+                        const lat = parseFloat(row[latKey]);
+                        const lon = parseFloat(row[lonKey]);
 
-                    if (!isNaN(lat) && !isNaN(lon)) {
-                        sheetCounts[sheet.name]++;
-                        let table = `<div style="max-height:150px; overflow-y:auto;"><table style="font-size:12px; width:100%;">`;
-                        for (let key in row) { if (row[key]) table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`; }
-                        table += `</table></div>`;
-                        
-                        const dot = L.circleMarker([lat, lon], { 
-                            radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8 
-                        }).bindPopup(table);
-                        
-                        dot.addTo(sheet.layerGroup);
-                        dot.addTo(markerGroup);
-                        allMarkers.push({ marker: dot, rowData: row, layerName: sheet.name, fullString: Object.values(row).join(" ").toLowerCase() });
-                    }
-                });
-                const countEl = document.getElementById(`count-${sheet.name.replace(/\s+/g, '')}`);
-                if (countEl) countEl.innerHTML = `(${sheetCounts[sheet.name]})`;
-            }
-        });
-    } catch (e) { console.error("Load failed:", e); }
-}
+                        if (!isNaN(lat) && !isNaN(lon)) {
+                            sheetCounts[sheet.name]++;
+                            let table = `<div style="max-height:150px; overflow-y:auto;"><table style="font-size:12px; width:100%;">`;
+                            for (let key in row) { if (row[key]) table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`; }
+                            table += `</table></div>`;
+                            
+                            // VERTICAL ORDER FIX: stepNum * 10 ensures later steps are always on top
+                            const dot = L.circleMarker([lat, lon], { 
+                                radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8,
+                                zIndexOffset: (sheet.stepNum * 10) 
+                            }).bindPopup(table);
+                            
+                            dot.addTo(sheet.layerGroup);
+                            dot.addTo(markerGroup);
+                            allMarkers.push({ marker: dot, rowData: row, layerName: sheet.name, fullString: Object.values(row).join(" ").toLowerCase() });
+                        }
+                    });
+                    const countEl = document.getElementById(`count-${sheet.name.replace(/\s+/g, '')}`);
+                    if (countEl) countEl.innerHTML = `(${sheetCounts[sheet.name]})`;
+                }
+            });
+        } catch (e) { console.error("Load failed:", e); }
+    }
 
     function setLastUpdated() {
         const now = new Date();
@@ -240,32 +196,23 @@ async function loadSheet(sheet, specificUrl) {
     });
     setLastUpdated();
 
-    // AUTO-POPULATE SEARCH LOGIC
     const searchInput = document.getElementById('mapSearch');
     const resultsList = document.getElementById('resultsList');
 
     searchInput.addEventListener('input', function() {
         const query = this.value.toLowerCase().trim();
         resultsList.innerHTML = ""; 
-        
-        if (query.length < 2) return; // Only start showing results after 2 characters to save performance
-
+        if (query.length < 2) return;
         const matches = allMarkers.filter(m => m.fullString.includes(query));
-        
-        // Limit results to top 50 to keep the sidebar snappy
         matches.slice(0, 50).forEach(m => {
             const li = document.createElement('li'); 
             li.className = 'result-item';
             li.innerHTML = `<b>${Object.values(m.rowData)[0]}</b><br><small>${m.layerName}</small>`;
-            li.onclick = () => { 
-                map.flyTo(m.marker.getLatLng(), 15); 
-                m.marker.openPopup(); 
-            };
+            li.onclick = () => { map.flyTo(m.marker.getLatLng(), 15); m.marker.openPopup(); };
             resultsList.appendChild(li);
         });
     });
 
-    // Traditional Search button still works as a "Force Search"
     document.getElementById('btnSearch').addEventListener('click', () => {
         const event = new Event('input');
         searchInput.dispatchEvent(event);
