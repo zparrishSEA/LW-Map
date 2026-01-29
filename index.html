@@ -100,7 +100,7 @@
                 max-height: 100vh !important; 
             }
             .leaflet-control-layers { 
-                max-height: 110px !important; /* Forces scrollbar for the legend */
+                max-height: 110px !important; 
                 width: 130px !important;
                 margin-top: 10px !important;
             }
@@ -128,7 +128,7 @@
     </div>
 
     <div class="sidebar-header">
-        <input type="text" id="mapSearch" class="search-box" placeholder="Find your district...">
+        <input type="text" id="mapSearch" class="search-box" placeholder="Start typing a district name...">
         <div class="btn-group">
             <button id="btnSearch" style="background:#89ebfa; color:#333;">Search</button>
             <button id="btnReset" style="background:#6c757d;">Reset View</button>
@@ -175,7 +175,6 @@
 
     sheets.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
     
-    // Switch to Top Right Legend on ALL mobile/narrow screens to avoid UI overlap
     const layerControl = L.control.layers(null, null, { 
         collapsed: false, 
         position: (window.innerWidth < 950) ? 'topright' : 'bottomright' 
@@ -191,9 +190,7 @@
 
 async function loadSheet(sheet, specificUrl) {
     const urlToUse = specificUrl || sheet.url;
-    
-    // REPLACE THIS LINE with your new Cloudflare Worker URL
-    const yourWorkerUrl = "https://sea-map-proxy.zparrish.workers.dev/"; // Paste yours here
+    const yourWorkerUrl = "https://sea-map-proxy.zparrish.workers.dev/"; 
     const proxyUrl = `${yourWorkerUrl}?url=${encodeURIComponent(urlToUse)}`;
     
     try {
@@ -205,7 +202,6 @@ async function loadSheet(sheet, specificUrl) {
             skipEmptyLines: true,
             complete: function(results) {
                 results.data.forEach(row => {
-                    // ... (rest of your marker logic stays exactly the same)
                     const latKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LAT');
                     const lonKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LON');
                     const lat = parseFloat(row[latKey]);
@@ -244,20 +240,40 @@ async function loadSheet(sheet, specificUrl) {
     });
     setLastUpdated();
 
-    document.getElementById('btnSearch').addEventListener('click', function() {
-        const query = document.getElementById('mapSearch').value.toLowerCase().trim();
-        const list = document.getElementById('resultsList');
-        list.innerHTML = ""; if (!query) return;
+    // AUTO-POPULATE SEARCH LOGIC
+    const searchInput = document.getElementById('mapSearch');
+    const resultsList = document.getElementById('resultsList');
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        resultsList.innerHTML = ""; 
+        
+        if (query.length < 2) return; // Only start showing results after 2 characters to save performance
+
         const matches = allMarkers.filter(m => m.fullString.includes(query));
-        matches.forEach(m => {
-            const li = document.createElement('li'); li.className = 'result-item';
+        
+        // Limit results to top 50 to keep the sidebar snappy
+        matches.slice(0, 50).forEach(m => {
+            const li = document.createElement('li'); 
+            li.className = 'result-item';
             li.innerHTML = `<b>${Object.values(m.rowData)[0]}</b><br><small>${m.layerName}</small>`;
-            li.onclick = () => { map.flyTo(m.marker.getLatLng(), 15); m.marker.openPopup(); };
-            list.appendChild(li);
+            li.onclick = () => { 
+                map.flyTo(m.marker.getLatLng(), 15); 
+                m.marker.openPopup(); 
+            };
+            resultsList.appendChild(li);
         });
     });
 
+    // Traditional Search button still works as a "Force Search"
+    document.getElementById('btnSearch').addEventListener('click', () => {
+        const event = new Event('input');
+        searchInput.dispatchEvent(event);
+    });
+
     document.getElementById('btnReset').addEventListener('click', () => {
+        searchInput.value = "";
+        resultsList.innerHTML = "";
         if(markerGroup.getBounds().isValid()) map.fitBounds(markerGroup.getBounds(), {padding: [50, 50]});
     });
 </script>
