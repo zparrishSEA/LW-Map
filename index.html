@@ -36,8 +36,23 @@
 
         .sidebar-intro { padding: 0 15px 15px 15px; text-align: left; }
         .sidebar-intro p { font-size: 12.5px; color: #444; line-height: 1.5; margin-bottom: 12px; }
-        .info-link { display: inline-block; font-size: 12px; color: #007bff; text-decoration: none; font-weight: bold; border: 1px solid #007bff; padding: 6px 10px; border-radius: 5px; margin-bottom: 10px; }
-        .update-badge { font-size: 10px; color: #28a745; background: #eaffed; display: inline-block; padding: 3px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #c3e6cb; margin-bottom: 10px; }
+        
+        .info-link, .search-label { 
+            display: inline-block; 
+            font-size: 11px; 
+            color: #007bff; 
+            font-weight: bold; 
+            border: 1px solid #007bff; 
+            padding: 6px 10px; 
+            border-radius: 5px; 
+            margin-bottom: 10px; 
+        }
+        .info-link { text-decoration: none; transition: all 0.2s ease; }
+        .info-link:hover { background: #007bff; color: #fff; }
+        .search-label { background: #f0f7ff; border-style: dashed; color: #444; margin-left: 5px; cursor: default; }
+
+        /* New Style for the Weekly Update Text */
+        .weekly-update-text { font-size: 11px; color: #666; font-style: italic; margin-top: 5px; display: block; }
 
         .sidebar-header { padding: 15px; border-bottom: 1px solid #eee; background: #fff; flex-shrink: 0; }
         .search-box { width: 100%; padding: 8px; border-radius: 20px; border: 1px solid #ccc; outline: none; box-sizing: border-box; }
@@ -78,8 +93,12 @@
         </a>
         <div class="sidebar-intro">
             <p>SEA's Map tracks LifeWise's implementation process in school districts all across the country. LifeWise developed a launch process with a stated goal of bringing their plug-and-play religious instruction franchise into every public school. Find your district, stay informed and protect your community from the invasion of Christian Nationalism.</p>
+            
             <a href="https://seculareducationassociation.org/lifewise-launch-process/" target="_blank" class="info-link">What Do These Steps Mean?</a>
-            <div id="last-updated" class="update-badge">● Loading Sequential Data...</div>
+            <span class="search-label">Search for your district below!</span>
+            
+            <span class="weekly-update-text">This map is updated once a week</span>
+
             <div class="share-container">
                 <a href="https://www.facebook.com/sharer/sharer.php?u=http://map.seculareducationassociation.org/" target="_blank" class="share-btn fb">Facebook</a>
                 <a href="https://twitter.com/intent/tweet?url=http://map.seculareducationassociation.org/" target="_blank" class="share-btn tw">X</a>
@@ -144,7 +163,6 @@
         layerControl.addOverlay(sheet.layerGroup, label);
     });
 
-    // Modified to return a Promise so the sequence can wait for each step
     async function loadSheet(sheet, specificUrl) {
         return new Promise(async (resolve) => {
             const urlToUse = specificUrl || sheet.url;
@@ -170,7 +188,6 @@
                                 for (let key in row) { if (row[key]) table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`; }
                                 table += `</table></div>`;
                                 
-                                // High Z-Index offset ensures visual stacking order (Step 11 on top)
                                 const dot = L.circleMarker([lat, lon], { 
                                     radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8,
                                     zIndexOffset: (sheet.stepNum * 50) 
@@ -183,33 +200,26 @@
                         });
                         const countEl = document.getElementById(`count-${sheet.name.replace(/\s+/g, '')}`);
                         if (countEl) countEl.innerHTML = `(${sheetCounts[sheet.name]})`;
-                        resolve(); // Sheet rendered successfully
+                        resolve();
                     },
-                    error: () => resolve() // Continue even on error
+                    error: () => resolve()
                 });
             } catch (e) { resolve(); }
         });
     }
 
-    // FUNCTION TO RUN SEQUENTIAL LOADING
     async function startSequentialLoad() {
         for (const sheet of sheets) {
             if (sheet.urls) {
-                // Wait for all Step 0 sub-files simultaneously before moving to Step 1
                 await Promise.all(sheet.urls.map(url => loadSheet(sheet, url)));
             } else {
-                // Wait for each step to finish rendering before starting the next
                 await loadSheet(sheet);
             }
         }
-        // Finalize Timestamp
-        const now = new Date();
-        document.getElementById('last-updated').innerHTML = `● Live Data: Updated ${now.toLocaleDateString()} at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     }
 
     startSequentialLoad();
 
-    // Auto-populate search logic
     const searchInput = document.getElementById('mapSearch');
     const resultsList = document.getElementById('resultsList');
 
