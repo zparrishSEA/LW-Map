@@ -87,6 +87,21 @@
             text-align: center;
         }
 
+        /* Popup Share Button Style */
+        .popup-share-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+        .popup-share-btn:hover { background-color: #0056b3; }
+
         /* Platform Brand Colors */
         .fb { background-color: #1877F2; }
         .tw { background-color: #000; }
@@ -227,12 +242,14 @@
                                 // Priority ordering for specific fields (District first)
                                 const priorityFields = ["District", "Schools Served", "School Name", "Grades"];
                                 const processedKeys = new Set();
+                                let districtName = "this district";
 
                                 priorityFields.forEach(field => {
                                     const key = Object.keys(row).find(k => k.trim() === field);
                                     if (key && row[key]) {
                                         table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`;
                                         processedKeys.add(key);
+                                        if (field === "District") districtName = row[key];
                                     }
                                 });
 
@@ -242,7 +259,12 @@
                                         table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`; 
                                     }
                                 }
-                                table += `</table></div>`;
+                                table += `</table>`;
+                                
+                                // Add Share District Button to Popup
+                                const safeName = districtName.replace(/'/g, "\\'");
+                                table += `<button onclick="shareDistrict('${safeName}')" class="popup-share-btn">Share District</button>`;
+                                table += `</div>`;
                                 
                                 const dot = L.circleMarker([lat, lon], { 
                                     radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8,
@@ -272,9 +294,48 @@
                 await loadSheet(sheet);
             }
         }
+        
+        // Deep linking logic: Check for ?district=Name
+        const params = new URLSearchParams(window.location.search);
+        const districtParam = params.get('district');
+        if (districtParam) {
+            const decodedName = decodeURIComponent(districtParam).toLowerCase().trim();
+            const target = allMarkers.find(m => {
+                const row = m.rowData;
+                const districtKey = Object.keys(row).find(k => k.trim() === "District");
+                if (districtKey && row[districtKey]) {
+                    return row[districtKey].toLowerCase().trim() === decodedName;
+                }
+                return false;
+            });
+
+            if (target) {
+                // Zoom in and open the popup
+                map.flyTo(target.marker.getLatLng(), 15);
+                target.marker.openPopup();
+            }
+        }
     }
 
     startSequentialLoad();
+
+    // Global share function that now creates a deep link
+    window.shareDistrict = function(name) {
+        // Strip existing params to avoid stacking ?district=...&district=...
+        const baseUrl = window.location.href.split('?')[0]; 
+        const deepLink = `${baseUrl}?district=${encodeURIComponent(name)}`;
+        const text = `Check out the status of ${name} on the LifeWise Program Map!`;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: 'LifeWise Program Map',
+                text: text,
+                url: deepLink
+            }).catch(console.error);
+        } else {
+            prompt("Copy this link to share the specific district view:", deepLink); 
+        }
+    };
 
     const searchInput = document.getElementById('mapSearch');
     const resultsList = document.getElementById('resultsList');
@@ -302,6 +363,8 @@
         searchInput.value = "";
         resultsList.innerHTML = "";
         if(markerGroup.getBounds().isValid()) map.fitBounds(markerGroup.getBounds(), {padding: [50, 50]});
+        // Also clear the URL param if user hits reset
+        window.history.pushState({}, document.title, window.location.pathname);
     });
 
     document.getElementById('btnEmbed').addEventListener('click', function(e) {
