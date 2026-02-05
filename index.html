@@ -62,7 +62,7 @@
         #resultsList { list-style: none; padding: 0; margin: 0; }
         .result-item { padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
 
-        /* Updated Share Container to support wrapping and new colors */
+        /* Share Container */
         .share-container { 
             margin-top: 15px; 
             font-size: 11px; 
@@ -90,13 +90,13 @@
         /* Platform Brand Colors */
         .fb { background-color: #1877F2; }
         .tw { background-color: #000; }
-        .rd { background-color: #FF4500; } /* Reddit Orange */
-        .ig { background-color: #E1306C; } /* Instagram Pink */
-        .th { background-color: #000000; } /* Threads Black */
-        .bs { background-color: #0560FF; } /* Bluesky Blue */
-        .tt { background-color: #000000; border: 1px solid #333; } /* TikTok Black */
-        .em { background-color: #6c757d; } /* Email Grey */
-        .embed { background-color: #555; } /* Embed Dark Grey */
+        .rd { background-color: #FF4500; }
+        .ig { background-color: #E1306C; }
+        .th { background-color: #000000; }
+        .bs { background-color: #0560FF; }
+        .tt { background-color: #000000; border: 1px solid #333; }
+        .em { background-color: #6c757d; }
+        .embed { background-color: #555; }
 
         @media (max-width: 768px) {
             body { flex-direction: column; }
@@ -132,21 +132,13 @@
 
             <div class="share-container">
                 <a href="https://www.facebook.com/sharer/sharer.php?u=http://map.seculareducationassociation.org/" target="_blank" class="share-btn fb">Facebook</a>
-                
                 <a href="https://twitter.com/intent/tweet?url=http://map.seculareducationassociation.org/" target="_blank" class="share-btn tw">X</a>
-                
                 <a href="https://www.reddit.com/submit?url=http://map.seculareducationassociation.org/&title=LifeWise%20Program%20Map" target="_blank" class="share-btn rd">Reddit</a>
-                
                 <a href="https://www.threads.net/intent/post?text=http://map.seculareducationassociation.org/" target="_blank" class="share-btn th">Threads</a>
-                
                 <a href="https://bsky.app/intent/compose?text=http://map.seculareducationassociation.org/" target="_blank" class="share-btn bs">Bluesky</a>
-                
                 <a href="https://instagram.com" target="_blank" class="share-btn ig">Instagram</a>
-                
                 <a href="https://tiktok.com" target="_blank" class="share-btn tt">TikTok</a>
-                
                 <a href="mailto:?subject=LifeWise Program Map&body=Check out this map tracking the LifeWise program: http://map.seculareducationassociation.org/" class="share-btn em">Email</a>
-
                 <a href="#" id="btnEmbed" class="share-btn embed" title="Get embed code">Embed</a>
             </div>
         </div>
@@ -231,7 +223,25 @@
                             if (!isNaN(lat) && !isNaN(lon)) {
                                 sheetCounts[sheet.name]++;
                                 let table = `<div style="max-height:150px; overflow-y:auto;"><table style="font-size:12px; width:100%;">`;
-                                for (let key in row) { if (row[key]) table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`; }
+                                
+                                // Priority ordering for specific fields (District first)
+                                const priorityFields = ["District", "Schools Served", "School Name", "Grades"];
+                                const processedKeys = new Set();
+
+                                priorityFields.forEach(field => {
+                                    const key = Object.keys(row).find(k => k.trim() === field);
+                                    if (key && row[key]) {
+                                        table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`;
+                                        processedKeys.add(key);
+                                    }
+                                });
+
+                                // Add all remaining fields
+                                for (let key in row) { 
+                                    if (row[key] && !processedKeys.has(key)) {
+                                        table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`; 
+                                    }
+                                }
                                 table += `</table></div>`;
                                 
                                 const dot = L.circleMarker([lat, lon], { 
@@ -294,7 +304,6 @@
         if(markerGroup.getBounds().isValid()) map.fitBounds(markerGroup.getBounds(), {padding: [50, 50]});
     });
 
-    // Embed Button Logic
     document.getElementById('btnEmbed').addEventListener('click', function(e) {
         e.preventDefault();
         const url = "http://map.seculareducationassociation.org";
