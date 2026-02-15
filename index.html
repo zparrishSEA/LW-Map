@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>LifeWise Program Map | Secular Education Association</title>
-
+    
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+    
     <meta name="description" content="Secular Education Association LifeWise Academy Map. View program progress, signature counts, and district status across the USA.">
     <meta name="keywords" content="LifeWise, LifeWise map, district status, launch process, Secular Education Association, SEA, signature tracking, Christian Nationalism">
 
@@ -27,9 +27,9 @@
         body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; height: 100vh; overflow: hidden; width: 100vw; }
         #sidebar { width: 320px; background: #fff; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 1001; height: 100vh; overflow-y: auto; }
         .logo-container { padding: 15px; text-align: center; border-bottom: 1px solid #eee; background: #fafafa; flex-shrink: 0; }
-
+        
         .company-logo { max-width: 117px; height: auto; margin-bottom: 10px; cursor: pointer; }
-
+        
         #map { flex-grow: 1; position: relative; height: 100%; background: #f0f0f0; }
 
         .leaflet-control-layers { max-width: 250px; font-size: 11px !important; background: rgba(255, 255, 255, 0.9) !important; box-shadow: 0 0 15px rgba(0,0,0,0.2) !important; border-radius: 8px !important; }
@@ -38,53 +38,53 @@
 
         .sidebar-intro { padding: 0 15px 15px 15px; text-align: left; }
         .sidebar-intro p { font-size: 12.5px; color: #444; line-height: 1.5; margin-bottom: 12px; }
-
+        
         /* Updated .info-link to work for both <a> and <button> identically */
-        .info-link {
-            display: inline-block;
-            font-size: 11px;
-            color: #007bff;
-            font-weight: bold;
-            border: 1px solid #007bff;
-            padding: 6px 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            text-decoration: none;
+        .info-link { 
+            display: inline-block; 
+            font-size: 11px; 
+            color: #007bff; 
+            font-weight: bold; 
+            border: 1px solid #007bff; 
+            padding: 6px 10px; 
+            border-radius: 5px; 
+            margin-bottom: 10px; 
+            text-decoration: none; 
             transition: all 0.2s ease;
             background-color: white;
             cursor: pointer;
             font-family: inherit; /* Ensures button inherits font */
         }
         .info-link:hover { background: #007bff; color: #fff; }
-
+        
         .weekly-update-text { font-size: 11px; color: #666; font-style: italic; margin-top: 5px; display: block; }
 
         .sidebar-header { padding: 15px; border-bottom: 1px solid #eee; background: #fff; flex-shrink: 0; }
         .search-box { width: 100%; padding: 8px; border-radius: 20px; border: 1px solid #ccc; outline: none; box-sizing: border-box; }
         .btn-group { display: flex; gap: 5px; margin-top: 10px; }
         button { flex: 1; padding: 8px; border-radius: 20px; border: none; color: white; cursor: pointer; font-size: 11px; font-weight: bold; }
-
+        
         #resultsList { list-style: none; padding: 0; margin: 0; }
         .result-item { padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
 
-        .share-container {
-            margin-top: 15px;
-            font-size: 11px;
-            color: #666;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 5px;
-            border-top: 1px solid #eee;
-            padding-top: 15px;
+        .share-container { 
+            margin-top: 15px; 
+            font-size: 11px; 
+            color: #666; 
+            display: flex; 
+            flex-wrap: wrap; 
+            align-items: center; 
+            gap: 5px; 
+            border-top: 1px solid #eee; 
+            padding-top: 15px; 
         }
-        .share-btn {
-            padding: 4px 8px;
-            border-radius: 4px;
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
+        .share-btn { 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            text-decoration: none; 
+            color: white; 
+            font-weight: bold; 
+            cursor: pointer; 
             font-size: 10px;
             display: inline-block;
             flex-grow: 1;
@@ -141,13 +141,13 @@
         </a>
         <div class="sidebar-intro">
             <p>SEA's Map tracks LifeWise's implementation process in school districts all across the country. LifeWise developed a launch process with a stated goal of bringing their plug-and-play religious instruction franchise into every public school. Find your district, stay informed and protect your community from the invasion of Christian Nationalism.</p>
-
+            
             <a href="https://docs.google.com/document/d/1UeDFioSK6O-dK8RpNESXMsXEV9n_MOUb8yzzYeAuFFc/edit?usp=sharing" target="_blank" class="info-link">Map Guide and More Info</a>
 
             <a href="https://seculareducationassociation.org/lifewise-launch-process/" target="_blank" class="info-link">What Do These Steps Mean?</a>
-
+            
             <button id="btnFocusSearch" class="info-link">Search For Your District Below</button>
-
+            
             <span class="weekly-update-text">This map is updated once a week</span>
 
             <div class="share-container">
@@ -196,10 +196,7 @@
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vSaa8gDF6ng1E8YUJ-THYsfHZ4M28y91nGpASy5GHfmfgISsXoP_XmswOEhZeYW8FHVsxzE1gh-Dstf/pub?output=csv",
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vQN6RMquGyImew2ZpR_-k-habAJSR0bgJO58Q3FhSgMaJdavS_QTVJjnnhXyUpRq8_t1QVpnmsFx8ig/pub?output=csv"
         ]},
-        { name: "Step 1", stepNum: 1, desc: "10-50 Signatures", color: "#2E85DB", urls: [
-			"https://docs.google.com/spreadsheets/d/e/2PACX-1vRzH9R_Hv6YkKDtOvk15NHGyWCYSwKHkzAyWQZ9iCACfYUi630v8jstDIkjB9vk5ELk9YZwiJoySerR/pub?output=csv",
-			"https://docs.google.com/spreadsheets/d/e/2PACX-1vQxbOqUHXrell7mGzMptD4xq2V8P1OuNb4dA8GPDhDmWUv2iy7XpQ9U06u6H-APyo_KaWNmDSeO4xxN/pub?output=csv"
-		]},
+        { name: "Step 1", stepNum: 1, desc: "10-50 Signatures", color: "#2E85DB", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRzH9R_Hv6YkKDtOvk15NHGyWCYSwKHkzAyWQZ9iCACfYUi630v8jstDIkjB9vk5ELk9YZwiJoySerR/pub?output=csv" },
         { name: "Step 2", stepNum: 2, desc: "Kickoff Meeting", color: "#ACDBB0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTnYrjWo0CCwhgbPCqHMCOE4td62A9zdq97d6zkDNlFaSSC0je1ID5qCfZ0gUxly_FeDg06NYbjBhH/pub?output=csv" },
         { name: "Step 3", stepNum: 3, desc: "Raise $500", color: "#25DB20", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5F0lL2gP5fujfLazuAAu6-HyTTdH_APQ53BXOygvz5QxZUbPmibFCLVZkLqTmj1bp1dDy5X7hJ-se/pub?output=csv" },
         { name: "Step 4", stepNum: 4, desc: "Form Committee", color: "#00FFA0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj-xjmLdJ9Uemt4tdbtbr75QNZVp5C19dYNiKkocutLxA4oHjeiwYjVNoDrXS278WWGKITZ0mCWzDw/pub?output=csv" },
@@ -213,7 +210,7 @@
     ];
 
     sheets.sort((a, b) => a.stepNum - b.stepNum);
-
+    
     const layerControl = L.control.layers(null, null, { collapsed: false, position: (window.innerWidth < 950) ? 'topright' : 'bottomright' }).addTo(map);
 
     sheets.forEach(sheet => {
@@ -227,13 +224,13 @@
     async function loadSheet(sheet, specificUrl) {
         return new Promise(async (resolve) => {
             const urlToUse = specificUrl || sheet.url;
-            const yourWorkerUrl = "https://sea-map-proxy.zparrish.workers.dev/";
+            const yourWorkerUrl = "https://sea-map-proxy.zparrish.workers.dev/"; 
             const proxyUrl = `${yourWorkerUrl}?url=${encodeURIComponent(urlToUse)}`;
-
+            
             try {
                 const response = await fetch(proxyUrl);
                 const csvText = await response.text();
-
+                
                 Papa.parse(csvText, {
                     header: true, skipEmptyLines: true,
                     complete: function(results) {
@@ -246,36 +243,44 @@
                             if (!isNaN(lat) && !isNaN(lon)) {
                                 sheetCounts[sheet.name]++;
                                 let table = `<div style="max-height:150px; overflow-y:auto;"><table style="font-size:12px; width:100%;">`;
-
+                                
                                 const priorityFields = ["District", "Schools Served", "School Name", "Grades"];
                                 const processedKeys = new Set();
                                 let districtName = "this district";
 
+                                // Helper function to check for URLs and format them
+                                const formatVal = (val) => {
+                                    if(val && (val.startsWith('http://') || val.startsWith('https://'))) {
+                                         return `<a href="${val}" target="_blank" style="color: #007bff; text-decoration: underline;">${val}</a>`;
+                                    }
+                                    return val;
+                                };
+
                                 priorityFields.forEach(field => {
                                     const key = Object.keys(row).find(k => k.trim() === field);
                                     if (key && row[key]) {
-                                        table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`;
+                                        table += `<tr><td><b>${key}</b></td><td>${formatVal(row[key])}</td></tr>`;
                                         processedKeys.add(key);
                                         if (field === "District") districtName = row[key];
                                     }
                                 });
 
-                                for (let key in row) {
+                                for (let key in row) { 
                                     if (row[key] && !processedKeys.has(key)) {
-                                        table += `<tr><td><b>${key}</b></td><td>${row[key]}</td></tr>`;
+                                        table += `<tr><td><b>${key}</b></td><td>${formatVal(row[key])}</td></tr>`; 
                                     }
                                 }
                                 table += `</table>`;
-
+                                
                                 const safeName = districtName.replace(/'/g, "\\'");
                                 table += `<button onclick="shareDistrict('${safeName}')" class="popup-share-btn">Share District</button>`;
                                 table += `</div>`;
-
-                                const dot = L.circleMarker([lat, lon], {
+                                
+                                const dot = L.circleMarker([lat, lon], { 
                                     radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8,
-                                    zIndexOffset: (sheet.stepNum * 50)
+                                    zIndexOffset: (sheet.stepNum * 50) 
                                 }).bindPopup(table);
-
+                                
                                 dot.addTo(sheet.layerGroup);
                                 dot.addTo(markerGroup);
                                 allMarkers.push({ marker: dot, rowData: row, layerName: sheet.name, fullString: Object.values(row).join(" ").toLowerCase() });
@@ -299,7 +304,7 @@
                 await loadSheet(sheet);
             }
         }
-
+        
         const params = new URLSearchParams(window.location.search);
         const districtParam = params.get('district');
         if (districtParam) {
@@ -323,10 +328,10 @@
     startSequentialLoad();
 
     window.shareDistrict = function(name) {
-        const baseUrl = window.location.href.split('?')[0];
+        const baseUrl = window.location.href.split('?')[0]; 
         const deepLink = `${baseUrl}?district=${encodeURIComponent(name)}`;
         const text = `Check out the status of ${name} on the LifeWise Program Map!`;
-
+        
         if (navigator.share) {
             navigator.share({
                 title: 'LifeWise Program Map',
@@ -334,7 +339,7 @@
                 url: deepLink
             }).catch(console.error);
         } else {
-            prompt("Copy this link to share the specific district view:", deepLink);
+            prompt("Copy this link to share the specific district view:", deepLink); 
         }
     };
 
@@ -343,11 +348,11 @@
 
     searchInput.addEventListener('input', function() {
         const query = this.value.toLowerCase().trim();
-        resultsList.innerHTML = "";
+        resultsList.innerHTML = ""; 
         if (query.length < 2) return;
         const matches = allMarkers.filter(m => m.fullString.includes(query));
         matches.slice(0, 50).forEach(m => {
-            const li = document.createElement('li');
+            const li = document.createElement('li'); 
             li.className = 'result-item';
             li.innerHTML = `<b>${Object.values(m.rowData)[0]}</b><br><small>${m.layerName}</small>`;
             li.onclick = () => { map.flyTo(m.marker.getLatLng(), 15); m.marker.openPopup(); };
