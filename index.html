@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>LifeWise Program Map | Secular Education Association</title>
-
+    
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+    
     <meta name="description" content="Secular Education Association LifeWise Academy Map. View program progress, signature counts, and district status across the USA.">
     <meta name="keywords" content="LifeWise, LifeWise map, district status, launch process, Secular Education Association, SEA, signature tracking, Christian Nationalism">
 
@@ -27,14 +27,302 @@
         body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; height: 100vh; overflow: hidden; width: 100vw; }
         #sidebar { width: 320px; background: #fff; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 1001; height: 100vh; overflow-y: auto; }
         .logo-container { padding: 15px; text-align: center; border-bottom: 1px solid #eee; background: #fafafa; flex-shrink: 0; }
-
+        
         .company-logo { max-width: 117px; height: auto; margin-bottom: 10px; cursor: pointer; }
-
+        
         #map { flex-grow: 1; position: relative; height: 100%; background: #f0f0f0; }
 
-        .leaflet-control-layers { max-width: 250px; font-size: 11px !important; background: rgba(255, 255, 255, 0.9) !important; box-shadow: 0 0 15px rgba(0,0,0,0.2) !important; border-radius: 8px !important; }
+        /* Lower z-index for controls so popups (z-index ~700) cover them on mobile */
+        .leaflet-control-layers { 
+            max-width: 250px; 
+            font-size: 11px !important; 
+            background: rgba(255, 255, 255, 0.9) !important; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.2) !important; 
+            border-radius: 8px !important; 
+            z-index: 500 !important; 
+        }
         .layer-desc { display: block; font-size: 9px; color: #777; margin-left: 22px; line-height: 1.1; }
         .marker-count { color: #007bff; font-weight: bold; }
+
+        .sidebar-intro { padding: 0 15px 15px 15px; text-align: left; }
+        .sidebar-intro p { font-size: 12.5px; color: #444; line-height: 1.5; margin-bottom: 12px; }
+        
+        /* Grid container for the 4 buttons */
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Two equal columns */
+            gap: 8px; /* Space between buttons */
+            margin-bottom: 10px;
+        }
+
+        /* Updated .info-link to work inside the grid */
+        .info-link { 
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 11px; 
+            color: #007bff; 
+            font-weight: bold; 
+            border: 1px solid #007bff; 
+            padding: 8px 5px; 
+            border-radius: 5px; 
+            text-decoration: none; 
+            transition: all 0.2s ease;
+            background-color: white;
+            cursor: pointer;
+            font-family: inherit;
+            height: 100%; 
+            box-sizing: border-box;
+            line-height: 1.2; 
+        }
+        .info-link:hover { background: #007bff; color: #fff; }
+        
+        .weekly-update-text { font-size: 11px; color: #666; font-style: italic; margin-top: 5px; display: block; }
+
+        .sidebar-header { padding: 15px; border-bottom: 1px solid #eee; background: #fff; flex-shrink: 0; }
+        .search-box { width: 100%; padding: 8px; border-radius: 20px; border: 1px solid #ccc; outline: none; box-sizing: border-box; }
+        .btn-group { display: flex; gap: 5px; margin-top: 10px; }
+        button { flex: 1; padding: 8px; border-radius: 20px; border: none; color: white; cursor: pointer; font-size: 11px; font-weight: bold; }
+        
+        #resultsList { list-style: none; padding: 0; margin: 0; }
+        .result-item { padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
+
+        .share-container { 
+            margin-top: 15px; 
+            font-size: 11px; 
+            color: #666; 
+            display: flex; 
+            flex-wrap: wrap; 
+            align-items: center; 
+            gap: 5px; 
+            border-top: 1px solid #eee; 
+            padding-top: 15px; 
+        }
+        .share-btn { 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            text-decoration: none; 
+            color: white; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 10px;
+            display: inline-block;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .popup-share-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+        .popup-share-btn:hover { background-color: #0056b3; }
+
+        .fb { background-color: #1877F2; }
+        .tw { background-color: #000; }
+        .rd { background-color: #FF4500; }
+        .ig { background-color: #E1306C; }
+        .th { background-color: #000000; }
+        .bs { background-color: #0560FF; }
+        .tt { background-color: #000000; border: 1px solid #333; }
+        .em { background-color: #6c757d; }
+        .embed { background-color: #555; }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            #sidebar { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid #ccc; z-index: 2000; }
+            #map { width: 100%; flex-grow: 1; }
+            .leaflet-control-layers { max-height: 160px !important; overflow-y: auto !important; width: 140px; font-size: 10px !important; }
+            .layer-desc { display: none; }
+        }
+
+        @media (max-width: 950px) and (orientation: landscape) {
+            body { flex-direction: row; }
+            #sidebar { width: 250px !important; height: 100vh !important; max-height: 100vh !important; }
+            .leaflet-control-layers { max-height: 110px !important; width: 130px !important; margin-top: 10px !important; }
+            .company-logo { max-width: 100px; }
+            .sidebar-intro p { font-size: 11px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="logo-container">
+        <a href="https://seculareducationassociation.org" target="_blank" title="Visit our website">
+            <img src="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1" alt="SEA Logo" class="company-logo">
+        </a>
+        <div class="sidebar-intro">
+            <p>SEA's Map tracks LifeWise's implementation process in school districts all across the country. LifeWise developed a launch process with a stated goal of bringing their plug-and-play religious instruction franchise into every public school. Find your district, stay informed and protect your community from the invasion of Christian Nationalism.</p>
+            
+            <div class="button-grid">
+                <a href="https://docs.google.com/document/d/1UeDFioSK6O-dK8RpNESXMsXEV9n_MOUb8yzzYeAuFFc/edit?usp=sharing" target="_blank" class="info-link">Map Guide & Info</a>
+                <a href="https://seculareducationassociation.org/lifewise-launch-process/" target="_blank" class="info-link">Step Meanings</a>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSd7gqS5tWwFjYv3zKkYJ7L3W7Q1G5XqQ7wJ8y0Z6w/viewform" target="_blank" class="info-link">Submit Info</a>
+                <button id="btnFocusSearch" class="info-link">Search Districts</button>
+            </div>
+            
+            <span class="weekly-update-text">This map is updated once a week</span>
+
+            <div class="share-container">
+                <a href="https://www.facebook.com/sharer/sharer.php?u=http://map.seculareducationassociation.org/" target="_blank" class="share-btn fb">Facebook</a>
+                <a href="https://twitter.com/intent/tweet?url=http://map.seculareducationassociation.org/" target="_blank" class="share-btn tw">X</a>
+                <a href="https://www.reddit.com/submit?url=http://map.seculareducationassociation.org/&title=LifeWise%20Program%20Map" target="_blank" class="share-btn rd">Reddit</a>
+                <a href="https://www.threads.net/intent/post?text=http://map.seculareducationassociation.org/" target="_blank" class="share-btn th">Threads</a>
+                <a href="https://bsky.app/intent/compose?text=http://map.seculareducationassociation.org/" target="_blank" class="share-btn bs">Bluesky</a>
+                <a href="https://instagram.com" target="_blank" class="share-btn ig">Instagram</a>
+                <a href="https://tiktok.com" target="_blank" class="share-btn tt">TikTok</a>
+                <a href="mailto:?subject=LifeWise Program Map&body=Check out this map tracking the LifeWise program: http://map.seculareducationassociation.org/" class="share-btn em">Email</a>
+                <a href="#" id="btnEmbed" class="share-btn embed" title="Get embed code">Embed</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-header">
+        <input type="text" id="mapSearch" class="search-box" placeholder="Start typing a district name...">
+        <div class="btn-group">
+            <button id="btnSearch" style="background:#89ebfa; color:#333;">Search</button>
+            <button id="btnReset" style="background:#6c757d;">Reset View</button>
+        </div>
+    </div>
+    <ul id="resultsList"></ul>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+<script>
+    const isMobile = window.innerWidth < 768;
+    const map = L.map('map').setView([39.5, -98.0], isMobile ? 3 : 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    const allMarkers = [];
+    const markerGroup = L.featureGroup().addTo(map);
+    const sheetCounts = {};
+
+    let sheets = [
+        { name: "Step 0", stepNum: 0, desc: "Under 10 Signatures", color: "#ABABAB", urls: [
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMii-mD_nfqLN4g6LkP1T2D8qFD2VE2KhEpsDMo8P5JqELjYzAzQmna7EFqLkgZL4MqbVq9QzBRyQW/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vSn0_v9d45f1-qsbK56zofHPyjVH0NEodOSmuexGt-D0eAEjyhCv_sXh8o11Vo2kzHozXS1mscFQ9Js/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXnmM1UDBJsZT66GmP9C2C9GzTK7pHrKNZn9ZZltQurpfQ3qlyRANWxQWGH5K6fsgwXw0TkXysk_ZJ/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vSaa8gDF6ng1E8YUJ-THYsfHZ4M28y91nGpASy5GHfmfgISsXoP_XmswOEhZeYW8FHVsxzE1gh-Dstf/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vQN6RMquGyImew2ZpR_-k-habAJSR0bgJO58Q3FhSgMaJdavS_QTVJjnnhXyUpRq8_t1QVpnmsFx8ig/pub?output=csv"
+        ]},
+        { name: "Step 1", stepNum: 1, desc: "10-50 Signatures", color: "#2E85DB", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTzJpeI6tIzbJ2EEs7hXP5AB0y2-Y0xZtvtZQu7Pv55gYrg8vCmwKNZnzam_W4KjY6JxbSM2W0E4Tj/pub?output=csv" },
+        { name: "Step 2", stepNum: 2, desc: "Kickoff Meeting", color: "#ACDBB0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTnYrjWo0CCwhgbPCqHMCOE4td62A9zdq97d6zkDNlFaSSC0je1ID5qCfZ0gUxly_FeDg06NYbjBhH/pub?output=csv" },
+        { name: "Step 3", stepNum: 3, desc: "Raise $500", color: "#25DB20", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5F0lL2gP5fujfLazuAAu6-HyTTdH_APQ53BXOygvz5QxZUbPmibFCLVZkLqTmj1bp1dDy5X7hJ-se/pub?output=csv" },
+        { name: "Step 4", stepNum: 4, desc: "Form Committee", color: "#00FFA0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj-xjmLdJ9Uemt4tdbtbr75QNZVp5C19dYNiKkocutLxA4oHjeiwYjVNoDrXS278WWGKITZ0mCWzDw/pub?output=csv" },
+        { name: "Step 5", stepNum: 5, desc: "Draft Plan", color: "#B0A122", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vReQNENdd47Fj4WRl-56WH1RzfOS_ZMMsD3zIlRMzLRnrxnUEdazAt7jrL--u3E6sSL3dfkiBKqlxU7/pub?output=csv" },
+        { name: "Step 6", stepNum: 6, desc: "School Approval", color: "#FFCB00", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyKG0veTaCk1pgKISO-qJonQLYZBxYprsHpt9j_Hh64L0XzZJk8IvZ6znEf2_YsgtKMbWOSsskkG8e/pub?output=csv" },
+        { name: "Step 7", stepNum: 7, desc: "Recruit Team", color: "#FFD0A2", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTotWVs9_F99p8CO-JA18RrnAhUXLbAM-C--2tMh-Xp9aShvwO6fJAO80J7rIs8WrbpyVmdF7FojsyG/pub?output=csv" },
+        { name: "Step 8", stepNum: 8, desc: "Train Team", color: "#FC80FF", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRycSZF-EW5KiNHdqBbAlSj8fcvU8IGdfej7Iwr4iYQNGJko_OlaAD67SECzfN0od_Q5BKJekwg2Pa8/pub?output=csv" },
+        { name: "Step 9", stepNum: 9, desc: "Execute Plan", color: "#FA5188", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzWNJx52SA-lsyLtOAfw-KZmw3x7vvbmWvp6D670GEgpbaitB8ylH9zKV1Xwc_76niUvuKIgDRlUUB/pub?output=csv" },
+        { name: "Step 10", stepNum: 10, desc: "Live Program", color: "#FF0004", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_UXNj1Uc9qQOD8e0Bou-eFkzLHYY0rPQEgaRnlfBoXMxE_ZmW29gK46Dgvf1tz8qbMl2-MbyoYHKp/pub?output=csv" },
+        { name: "Step 11", stepNum: 11, desc: "Mature Program", color: "#420102", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIEKicXubtMmQ2HgDKNqITU-M_6WtG6Agqv44XLGbPLNckcZuM8q7P9eQIKf3-QadEkoLtARW7M2LJ/pub?output=csv" }
+    ];
+
+    sheets.sort((a, b) => a.stepNum - b.stepNum);
+    
+    const layerControl = L.control.layers(null, null, { collapsed: false, position: (window.innerWidth < 950) ? 'topright' : 'bottomright' }).addTo(map);
+
+    sheets.forEach(sheet => {
+        sheet.layerGroup = L.layerGroup().addTo(map);
+        sheetCounts[sheet.name] = 0;
+        const id = `count-${sheet.name.replace(/\s+/g, '')}`;
+        const label = `<b style="color:${sheet.color}">${sheet.name}</b> <span id="${id}" class="marker-count">(...)</span><span class="layer-desc">${sheet.desc}</span>`;
+        layerControl.addOverlay(sheet.layerGroup, label);
+    });
+
+    async function loadSheet(sheet, specificUrl) {
+        return new Promise(async (resolve) => {
+            const urlToUse = specificUrl || sheet.url;
+            const yourWorkerUrl = "https://sea-map-proxy.zparrish.workers.dev/"; 
+            const proxyUrl = `${yourWorkerUrl}?url=${encodeURIComponent(urlToUse)}`;
+            
+            try {
+                const response = await fetch(proxyUrl);
+                const csvText = await response.text();
+                
+                Papa.parse(csvText, {
+                    header: true, skipEmptyLines: true,
+                    complete: function(results) {
+                        results.data.forEach(row => {
+                            const latKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LAT');
+                            const lonKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LON');
+                            const lat = parseFloat(row[latKey]);
+                            const lon = parseFloat(row[lonKey]);
+
+                            if (!isNaN(lat) && !isNaN(lon)) {
+                                sheetCounts[sheet.name]++;
+                                let table = `<div style="max-height:150px; overflow-y:auto;"><table style="font-size:12px; width:100%;">`;
+                                
+                                const priorityFields = ["District", "Schools Served", "School Name", "Grades"];
+                                const processedKeys = new Set();
+                                let districtName = "this district";
+
+                                // Updated Helper function: 
+                                // 1. Uses the cell text (val) as the link text.
+                                // 2. Detects 'www.' without http
+                                const formatVal = (val) => {
+                                    if (!val) return val;
+                                    let url = val.trim();
+                                    
+                                    // Check if it looks like a URL
+                                    if (url.toLowerCase().startsWith('http://') || url.toLowerCase().startsWith('https://')) {
+                                        return `<a href="${url}" target="_blank" style="color: #007bff; text-decoration: underline;">${val}</a>`;
+                                    } 
+                                    // Check for www. start
+                                    else if (url.toLowerCase().startsWith('www.')) {
+                                        return `<a href="https://${url}" target="_blank" style="color: #007bff; text-decoration: underline;">${val}</a>`;
+                                    }
+                                    
+                                    return val;
+                                };
+
+                                priorityFields.forEach(field => {
+                                    const key = Object.keys(row).find(k => k.trim() === field);
+                                    if (key && row[key]) {
+                                        table += `<tr><td><b>${key}</b></td><td>${formatVal(row[key])}</td></tr>`;
+                                        processedKeys.add(key);
+                                        if (field === "District") districtName = row[key];
+                                    }
+                                });
+
+                                for (let key in row) { 
+                                    if (row[key] && !processedKeys.has(key)) {
+                                        table += `<tr><td><b>${key}</b></td><td>${formatVal(row[key])}</td></tr>`; 
+                                    }
+                                }
+                                table += `</table>`;
+                                
+                                const safeName = districtName.replace(/'/g, "\\'");
+                                table += `<button onclick="shareDistrict('${safeName}')" class="popup-share-btn">Share District</button>`;
+                                table += `</div>`;
+                                
+                                const dot = L.circleMarker([lat, lon], { 
+                                    radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8,
+                                    zIndexOffset: (sheet.stepNum * 50) 
+                                }).bindPopup(table);
+                                
+                                dot.addTo(sheet.layerGroup);
+                                dot.addTo(markerGroup);
+                                allMarkers.push({ marker: dot, rowData: row, layerName: sheet.name, fullString: Object.values(row).join(" ").toLowerCase() });
+                            }
+                        });
+                        const countEl = document.getElementById(`count-${sheet.name.replace(/\s+/g, '')}`);
+                        if (countEl) countEl.innerHTML = `(${sheetCounts[sheet.name]})`;
+                        resolve();
+                        .marker-count { color: #007bff; font-weight: bold; }
 
         .sidebar-intro { padding: 0 15px 15px 15px; text-align: left; }
         .sidebar-intro p { font-size: 12.5px; color: #444; line-height: 1.5; margin-bottom: 12px; }
