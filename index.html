@@ -204,6 +204,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 
 <script>
     const isMobile = window.innerWidth < 768;
@@ -239,15 +240,78 @@
     
     const layerControl = L.control.layers(null, null, { collapsed: false, position: (window.innerWidth < 950) ? 'topright' : 'bottomright' }).addTo(map);
 
+    // Load US State Boundaries and add state click logic
+    fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
+        .then(res => res.json())
+        .then(data => {
+            const stateLayer = L.geoJSON(data, {
+                style: {
+                    color: "#6c757d",
+                    weight: 1.5,
+                    fillColor: "#007bff",
+                    fillOpacity: 0.02
+                },
+                onEachFeature: function(feature, layer) {
+                    layer.on('click', function(e) {
+                        L.DomEvent.stopPropagation(e.originalEvent); // Prevent underlying map click
+
+                        let stateCounts = {};
+                        sheets.forEach(s => stateCounts[s.name] = 0);
+                        let totalInState = 0;
+
+                        allMarkers.forEach(m => {
+                            const lng = m.marker.getLatLng().lng;
+                            const lat = m.marker.getLatLng().lat;
+                            const pt = turf.point([lng, lat]);
+                            
+                            try {
+                                if (turf.booleanPointInPolygon(pt, feature)) {
+                                    stateCounts[m.layerName]++;
+                                    totalInState++;
+                                }
+                            } catch (err) { }
+                        });
+
+                        let popupHtml = `<div style="font-family: 'Segoe UI', Tahoma, sans-serif; min-width: 170px;">
+                            <h3 style="margin: 0 0 10px 0; font-size: 15px; border-bottom: 2px solid #eee; padding-bottom: 5px;">${feature.properties.name} Summary</h3>
+                            <table style="width: 100%; font-size: 12px; border-collapse: collapse;">`;
+                        
+                        sheets.forEach(s => {
+                            if (stateCounts[s.name] > 0) {
+                                popupHtml += `<tr>
+                                    <td style="padding: 4px 0;">
+                                        <span style="display: inline-block; width: 10px; height: 10px; background-color: ${s.color}; border: 1px solid #fff; border-radius: 50%; opacity: 0.8; margin-right: 5px; vertical-align: -1px; box-sizing: border-box;"></span>
+                                        <b>${s.name}</b>
+                                    </td>
+                                    <td style="text-align: right; padding: 4px 0;">${stateCounts[s.name]}</td>
+                                </tr>`;
+                            }
+                        });
+
+                        popupHtml += `<tr style="border-top: 1px solid #ccc;">
+                            <td style="padding: 6px 0;"><b>Total Programs:</b></td>
+                            <td style="text-align: right; padding: 6px 0;"><b>${totalInState}</b></td>
+                        </tr>
+                        </table></div>`;
+
+                        L.popup()
+                            .setLatLng(e.latlng)
+                            .setContent(popupHtml)
+                            .openOn(map);
+                    });
+                }
+            }).addTo(map);
+
+            stateLayer.bringToBack(); // Puts state borders behind markers
+        });
+
     // Event Listeners to Hide/Show Key when popup opens/closes
     map.on('popupopen', function() {
-        // Find the leaflet-control-layers and add the 'hidden-key' class
         const control = document.querySelector('.leaflet-control-layers');
         if (control) control.classList.add('hidden-key');
     });
 
     map.on('popupclose', function() {
-        // Find the leaflet-control-layers and remove the 'hidden-key' class
         const control = document.querySelector('.leaflet-control-layers');
         if (control) control.classList.remove('hidden-key');
     });
@@ -287,14 +351,12 @@
                                 const processedKeys = new Set();
                                 let districtName = "this district";
 
-                                // Updated Helper function: Strictly checks for URL-like strings
                                 const formatVal = (val) => {
                                     if (!val) return val;
                                     let text = val.trim();
                                     let url = text;
                                     let isLink = false;
 
-                                    // Only linkify if it doesn't contain spaces (avoids linking sentences)
                                     if (!text.includes(' ')) {
                                         if (url.toLowerCase().startsWith('http://') || url.toLowerCase().startsWith('https://')) {
                                             isLink = true;
@@ -303,7 +365,6 @@
                                             url = 'https://' + url;
                                             isLink = true;
                                         }
-                                        // Check for common domains if no protocol is present
                                         else if (url.match(/\.(com|org|net|edu|gov|io)\b/i)) {
                                             url = 'https://' + url;
                                             isLink = true;
