@@ -4,160 +4,138 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>LifeWise Program Map | Secular Education Association</title>
-    
+
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1dACXmZYFekAADTN5peF2Z6KxXRelDvv1">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
+
     <meta name="description" content="Secular Education Association LifeWise Academy Map. View program progress, signature counts, and district status across the USA.">
     <meta name="keywords" content="LifeWise, LifeWise map, district status, launch process, Secular Education Association, SEA, signature tracking, Christian Nationalism">
 
-    <meta property="og:title" content="LifeWise Program Map">
-    <meta property="og:description" content="Tracking community implementation and program maturity in real-time.">
-    <meta property="og:url" content="http://map.seculareducationassociation.org">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="http://map.seculareducationassociation.org/map_preview.png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="LifeWise Program Map">
-    <meta name="twitter:image" content="http://map.seculareducationassociation.org/map_preview.png">
-
     <style>
         body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; height: 100vh; overflow: hidden; width: 100vw; }
+
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255, 255, 255, 0.95); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+        #loadingOverlay h2 { margin: 15px 0 5px 0; color: #333; }
+        #loadingOverlay p { margin: 0; color: #666; font-size: 14px; text-align: center; max-width: 80%; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         #sidebar { width: 320px; background: #fff; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 2001; height: 100vh; overflow-y: auto; }
         .logo-container { padding: 15px; text-align: center; border-bottom: 1px solid #eee; background: #fafafa; flex-shrink: 0; }
-        
         .company-logo { max-width: 117px; height: auto; margin-bottom: 10px; cursor: pointer; }
-        
+
         #map { flex-grow: 1; position: relative; height: 100%; background: #f0f0f0; }
 
-        .leaflet-control-layers { 
-            max-width: 250px; 
-            font-size: 11px !important; 
-            background: rgba(255, 255, 255, 0.9) !important; 
-            box-shadow: 0 0 15px rgba(0,0,0,0.2) !important; 
-            border-radius: 8px !important; 
-            z-index: 500 !important;
-            transition: opacity 0.3s ease; /* Smooth transition for hiding/showing */
-        }
-        
-        /* New Class to Hide the Key */
-        .hidden-key { display: none !important; }
+        .custom-legend { width: 280px; background: rgba(255, 255, 255, 0.95); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 8px; z-index: 1000; display: flex; flex-direction: column; overflow: hidden; font-size: 11px; transition: opacity 0.3s ease; }
+.legend-tabs { display: flex; border-bottom: 1px solid #ccc; background: #f8f9fa; }
+.legend-tab { flex: 1; padding: 10px 4px; text-align: center; cursor: pointer; font-weight: bold; color: #666; border-bottom: 2px solid transparent; font-size: 10.5px; transition: all 0.2s; }
+.legend-tab:hover { background: #eee; }
+.legend-tab.active { color: #007bff; border-bottom-color: #007bff; background: #fff; }
+.legend-pane { display: none; padding: 12px; max-height: 550px; overflow-y: auto; }
+.legend-pane.active { display: block; }
+.legend-row { margin-bottom: 8px; line-height: 1.2; display: flex; align-items: flex-start; }
+.legend-row input[type="checkbox"] { margin: 0 8px 0 0; cursor: pointer; margin-top: 2px; }
+.legend-icon-container { display: inline-flex; align-items: center; justify-content: center; width: 16px; margin-right: 6px; }
+.legend-color-dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+.legend-color-square { width: 12px; height: 12px; border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+.legend-desc { display: block; font-size: 9px; color: #777; margin-left: 24px; margin-top: 2px; }
+.marker-count { color: #007bff; font-weight: bold; }
+.school-explainer { background: #e9ecef; border-left: 3px solid #007bff; padding: 8px; border-radius: 4px; margin-bottom: 12px; font-size: 10px; color: #444; line-height: 1.4; }
+.hidden-key { display: none !important; }
 
-        .layer-desc { display: block; font-size: 9px; color: #777; margin-left: 22px; line-height: 1.1; }
-        .marker-count { color: #007bff; font-weight: bold; }
+@media (max-width: 768px) {
+    .custom-legend { width: 220px; }
+    .legend-pane { max-height: 200px; padding: 8px; }
+    .legend-tab { padding: 8px 2px; font-size: 10px; }
+    .legend-desc { display: none; }
+}
 
         .sidebar-intro { padding: 0 15px 15px 15px; text-align: left; }
         .sidebar-intro p { font-size: 12.5px; color: #444; line-height: 1.5; margin-bottom: 12px; }
-        
-        /* Grid container for the 4 buttons */
-        .button-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr; /* Two equal columns */
-            gap: 8px; /* Space between buttons */
-            margin-bottom: 10px;
-        }
 
-        /* Updated .info-link to work inside the grid */
-        .info-link { 
-            display: flex; 
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: 11px; 
-            color: #007bff; 
-            font-weight: bold; 
-            border: 1px solid #007bff; 
-            padding: 8px 5px; 
-            border-radius: 5px; 
-            text-decoration: none; 
-            transition: all 0.2s ease;
-            background-color: white;
-            cursor: pointer;
-            font-family: inherit;
-            height: 100%; 
-            box-sizing: border-box;
-            line-height: 1.2; 
+        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .info-link {
+            display: flex; align-items: center; justify-content: center; text-align: center; font-size: 11px;
+            color: #007bff; font-weight: bold; border: 1px solid #007bff; padding: 8px 5px; border-radius: 5px;
+            text-decoration: none; transition: all 0.2s ease; background-color: white; cursor: pointer;
+            font-family: inherit; height: 100%; box-sizing: border-box; line-height: 1.2;
         }
         .info-link:hover { background: #007bff; color: #fff; }
-        
+
         .weekly-update-text { font-size: 11px; color: #666; font-style: italic; margin-top: 5px; display: block; }
 
         .sidebar-header { padding: 15px; border-bottom: 1px solid #eee; background: #fff; flex-shrink: 0; }
         .search-box { width: 100%; padding: 8px; border-radius: 20px; border: 1px solid #ccc; outline: none; box-sizing: border-box; }
         .btn-group { display: flex; gap: 5px; margin-top: 10px; }
         button { flex: 1; padding: 8px; border-radius: 20px; border: none; color: white; cursor: pointer; font-size: 11px; font-weight: bold; }
-        
+
         #resultsList { list-style: none; padding: 0; margin: 0; }
         .result-item { padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
 
-        .share-container { 
-            margin-top: 15px; 
-            font-size: 11px; 
-            color: #666; 
-            display: flex; 
-            flex-wrap: wrap; 
-            align-items: center; 
-            gap: 5px; 
-            border-top: 1px solid #eee; 
-            padding-top: 15px; 
-        }
-        .share-btn { 
-            padding: 4px 8px; 
-            border-radius: 4px; 
-            text-decoration: none; 
-            color: white; 
-            font-weight: bold; 
-            cursor: pointer; 
-            font-size: 10px;
-            display: inline-block;
-            flex-grow: 1;
-            text-align: center;
-        }
+        .share-container { margin-top: 15px; font-size: 11px; color: #666; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; border-top: 1px solid #eee; padding-top: 15px; }
+        .share-btn { padding: 4px 8px; border-radius: 4px; text-decoration: none; color: white; font-weight: bold; cursor: pointer; font-size: 10px; display: inline-block; flex-grow: 1; text-align: center; }
 
-        .popup-share-btn {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 12px;
-            font-size: 11px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 8px;
-            font-weight: bold;
-        }
+        .popup-share-btn { background-color: #007bff; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 11px; cursor: pointer; width: 100%; margin-top: 8px; font-weight: bold; }
         .popup-share-btn:hover { background-color: #0056b3; }
 
-        .fb { background-color: #1877F2; }
-        .tw { background-color: #000; }
-        .rd { background-color: #FF4500; }
-        .ig { background-color: #E1306C; }
-        .th { background-color: #000000; }
-        .bs { background-color: #0560FF; }
-        .tt { background-color: #000000; border: 1px solid #333; }
-        .em { background-color: #6c757d; }
-        .embed { background-color: #555; }
+        .fb { background-color: #1877F2; } .tw { background-color: #000; } .rd { background-color: #FF4500; }
+        .ig { background-color: #E1306C; } .th { background-color: #000000; } .bs { background-color: #0560FF; }
+        .tt { background-color: #000000; border: 1px solid #333; } .em { background-color: #6c757d; } .embed { background-color: #555; }
+
+        /* --- APP POPUP STYLES --- */
+        .app-popup { width: 260px; max-height: 600px; overflow-y: auto; overflow-x: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #333; }
+		.app-popup > * { padding-right: 18px; box-sizing: border-box; }
+        .popup-header-red { color: #d32f2f; font-weight: bold; font-size: 13px; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 6px; margin-bottom: 10px; }
+        .app-row { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px solid #f9f9f9; padding-bottom: 2px; }
+        .app-label { font-weight: bold; color: #555; }
+        .app-val { text-align: right; max-width: 60%; word-wrap: break-word; }
+        .app-val a { color: #007bff; text-decoration: none; }
+        .app-val a:hover { text-decoration: underline; }
+
+        .nav-btn { display: block; width: 100%; background: #f4f4f4; border: 1px solid #ddd; padding: 8px; margin-top: 8px; cursor: pointer; border-radius: 4px; font-weight: bold; color: #333; text-align: left; }
+        /* Change the question mark to a right arrow */
+        .nav-btn::after { content: " \2192"; float: right; color: #888; }
+        .nav-btn:hover { background: #e9e9e9; }
+
+        .back-btn { display: inline-block; cursor: pointer; color: #007bff; font-weight: bold; margin-bottom: 10px; text-decoration: none; font-size: 11px; }
+        /* Change the question mark to a left arrow */
+        .back-btn::before { content: "\2190 Back"; }
+        .back-btn:hover { text-decoration: underline; }
+
+        .school-link { display: block; color: #007bff; cursor: pointer; margin-bottom: 6px; padding: 4px; background: #fcfcfc; border: 1px solid #eee; border-radius: 4px; text-decoration: none; }
+        .school-link:hover { background: #f0f8ff; border-color: #b8daff; }
+        .scroll-box { max-height: 180px; overflow-y: auto; padding-right: 5px; margin-bottom: 10px; }
+
+        /* Custom Triangle Fixes */
+        .school-triangle-icon { background: none; border: none; }
 
         @media (max-width: 768px) {
             body { flex-direction: column; }
             #sidebar { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid #ccc; z-index: 3000; }
             #map { width: 100%; flex-grow: 1; }
-            .leaflet-control-layers { max-height: 160px !important; overflow-y: auto !important; width: 140px; font-size: 10px !important; }
             .layer-desc { display: none; }
         }
 
         @media (max-width: 950px) and (orientation: landscape) {
             body { flex-direction: row; }
             #sidebar { width: 250px !important; height: 100vh !important; max-height: 100vh !important; }
-            .leaflet-control-layers { max-height: 110px !important; width: 130px !important; margin-top: 10px !important; }
             .company-logo { max-width: 100px; }
             .sidebar-intro p { font-size: 11px; }
         }
     </style>
 </head>
 <body>
+
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+    <h2>Loading Map Data...</h2>
+    <p>LifeWise is tracking their progress in 17,400+ unique districts and 95,900+ individual schools across the nation, and so are we.</p>
+</div>
 
 <div id="sidebar">
     <div class="logo-container">
@@ -166,14 +144,14 @@
         </a>
         <div class="sidebar-intro">
             <p>SEA's Map tracks LifeWise's implementation process in school districts all across the country. LifeWise developed a launch process with a stated goal of bringing their plug-and-play religious instruction franchise into every public school. Find your district, stay informed and protect your community from the invasion of Christian Nationalism.</p>
-            
+
             <div class="button-grid">
                 <a href="https://docs.google.com/document/d/1UeDFioSK6O-dK8RpNESXMsXEV9n_MOUb8yzzYeAuFFc/edit?usp=sharing" target="_blank" class="info-link">Map Guide & Info</a>
                 <a href="https://seculareducationassociation.org/lifewise-launch-process/" target="_blank" class="info-link">Step Meanings</a>
                 <a href="https://docs.google.com/forms/d/e/1FAIpQLScpde8uK7FeoVGkDHnKFcphyPDKLUFnqKBCfilq3lV-B1-SGQ/viewform?usp=header" target="_blank" class="info-link">Submit Info</a>
                 <button id="btnFocusSearch" class="info-link">Search Districts</button>
             </div>
-            
+
             <span class="weekly-update-text">This map is updated once a week</span>
 
             <div class="share-container">
@@ -191,7 +169,7 @@
     </div>
 
     <div class="sidebar-header">
-        <input type="text" id="mapSearch" class="search-box" placeholder="Start typing a district name...">
+        <input type="text" id="mapSearch" class="search-box" placeholder="Start typing a district or school...">
         <div class="btn-group">
             <button id="btnSearch" style="background:#89ebfa; color:#333;">Search</button>
             <button id="btnReset" style="background:#6c757d;">Reset View</button>
@@ -208,342 +186,842 @@
 
 <script>
     const isMobile = window.innerWidth < 768;
-    const map = L.map('map').setView([39.5, -98.0], isMobile ? 3 : 4);
+    const map = L.map('map', { preferCanvas: true }).setView([38.0, -85.0], isMobile ? 3 : 4);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    const allMarkers = [];
-    const markerGroup = L.featureGroup().addTo(map);
-    const sheetCounts = {};
-    const countedDistricts = new Set(); // Tracks overall counted districts for the key
+    const markerGroup = L.featureGroup();
+    const allSearchData = [];
+    const districtsData = {};
 
-    let sheets = [
-        { name: "Step 0", stepNum: 0, desc: "Under 10 Signatures", color: "#ABABAB", urls: [
-            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMii-mD_nfqLN4g6LkP1T2D8qFD2VE2KhEpsDMo8P5JqELjYzAzQmna7EFqLkgZL4MqbVq9QzBRyQW/pub?output=csv",
-            "https://docs.google.com/spreadsheets/d/e/2PACX-1vSn0_v9d45f1-qsbK56zofHPyjVH0NEodOSmuexGt-D0eAEjyhCv_sXh8o11Vo2kzHozXS1mscFQ9Js/pub?output=csv",
-            "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXnmM1UDBJsZT66GmP9C2C9GzTK7pHrKNZn9ZZltQurpfQ3qlyRANWxQWGH5K6fsgwXw0TkXysk_ZJ/pub?output=csv",
-            "https://docs.google.com/spreadsheets/d/e/2PACX-1vSaa8gDF6ng1E8YUJ-THYsfHZ4M28y91nGpASy5GHfmfgISsXoP_XmswOEhZeYW8FHVsxzE1gh-Dstf/pub?output=csv",
-            "https://docs.google.com/spreadsheets/d/e/2PACX-1vQN6RMquGyImew2ZpR_-k-habAJSR0bgJO58Q3FhSgMaJdavS_QTVJjnnhXyUpRq8_t1QVpnmsFx8ig/pub?output=csv"
-        ]},
-        { name: "Step 1", stepNum: 1, desc: "10-50 Signatures", color: "#2E85DB", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTzJpeI6tIzbJ2EEs7hXP5AB0y2-Y0xZtvtZQu7Pv55gYrg8vCmwKNZnzam_W4KjY6JxbSM2W0E4Tj/pub?output=csv" },
-        { name: "Step 2", stepNum: 2, desc: "Kickoff Meeting", color: "#ACDBB0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTnYrjWo0CCwhgbPCqHMCOE4td62A9zdq97d6zkDNlFaSSC0je1ID5qCfZ0gUxly_FeDg06NYbjBhH/pub?output=csv" },
-        { name: "Step 3", stepNum: 3, desc: "Raise $500", color: "#25DB20", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR5F0lL2gP5fujfLazuAAu6-HyTTdH_APQ53BXOygvz5QxZUbPmibFCLVZkLqTmj1bp1dDy5X7hJ-se/pub?output=csv" },
-        { name: "Step 4", stepNum: 4, desc: "Form Committee", color: "#00FFA0", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQj-xjmLdJ9Uemt4tdbtbr75QNZVp5C19dYNiKkocutLxA4oHjeiwYjVNoDrXS278WWGKITZ0mCWzDw/pub?output=csv" },
-        { name: "Step 5", stepNum: 5, desc: "Draft Plan", color: "#B0A122", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vReQNENdd47Fj4WRl-56WH1RzfOS_ZMMsD3zIlRMzLRnrxnUEdazAt7jrL--u3E6sSL3dfkiBKqlxU7/pub?output=csv" },
-        { name: "Step 6", stepNum: 6, desc: "School Approval", color: "#FFCB00", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyKG0veTaCk1pgKISO-qJonQLYZBxYprsHpt9j_Hh64L0XzZJk8IvZ6znEf2_YsgtKMbWOSsskkG8e/pub?output=csv" },
-        { name: "Step 7", stepNum: 7, desc: "Recruit Team", color: "#FFD0A2", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTotWVs9_F99p8CO-JA18RrnAhUXLbAM-C--2tMh-Xp9aShvwO6fJAO80J7rIs8WrbpyVmdF7FojsyG/pub?output=csv" },
-        { name: "Step 8", stepNum: 8, desc: "Train Team", color: "#FC80FF", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRycSZF-EW5KiNHdqBbAlSj8fcvU8IGdfej7Iwr4iYQNGJko_OlaAD67SECzfN0od_Q5BKJekwg2Pa8/pub?output=csv" },
-        { name: "Step 9", stepNum: 9, desc: "Execute Plan", color: "#FA5188", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzWNJx52SA-lsyLtOAfw-KZmw3x7vvbmWvp6D670GEgpbaitB8ylH9zKV1Xwc_76niUvuKIgDRlUUB/pub?output=csv" },
-        { name: "Step 10", stepNum: 10, desc: "Live Program", color: "#FF0004", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_UXNj1Uc9qQOD8e0Bou-eFkzLHYY0rPQEgaRnlfBoXMxE_ZmW29gK46Dgvf1tz8qbMl2-MbyoYHKp/pub?output=csv" },
-        { name: "Step 11", stepNum: 11, desc: "Mature Program", color: "#420102", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIEKicXubtMmQ2HgDKNqITU-M_6WtG6Agqv44XLGbPLNckcZuM8q7P9eQIKf3-QadEkoLtARW7M2LJ/pub?output=csv" }
+	let sheets = [
+        { name: "Step 0", stepNum: 0, desc: "Under 10 Signatures", color: "#ABABAB" },
+        { name: "Step 1", stepNum: 1, desc: "10-50 Signatures", color: "#2E85DB" },
+        { name: "Step 2", stepNum: 2, desc: "Kickoff Meeting", color: "#ACDBB0" },
+        { name: "Step 3", stepNum: 3, desc: "Raise $500", color: "#25DB20" },
+        { name: "Step 4", stepNum: 4, desc: "Form Committee", color: "#00FFA0" },
+        { name: "Step 5", stepNum: 5, desc: "Draft Plan", color: "#B0A122" },
+        { name: "Step 6", stepNum: 6, desc: "School Approval", color: "#FFCB00" },
+        { name: "Step 7", stepNum: 7, desc: "Recruit Team", color: "#FFD0A2" },
+        { name: "Step 8", stepNum: 8, desc: "Train Team", color: "#FC80FF" },
+        { name: "Step 9", stepNum: 9, desc: "Execute Plan", color: "#FA5188" },
+        { name: "Step 10", stepNum: 10, desc: "Live Program", color: "#FF0004" },
+        { name: "Step 11", stepNum: 11, desc: "Mature Program", color: "#420102" }
     ];
 
-    sheets.sort((a, b) => a.stepNum - b.stepNum);
-    
-    const layerControl = L.control.layers(null, null, { collapsed: false, position: (window.innerWidth < 950) ? 'topright' : 'bottomright' }).addTo(map);
+    const counts = { districts: {}, schools: {}, charters: {} };
 
-    // Load US State Boundaries and add state click logic
+    sheets.forEach(sheet => {
+        sheet.layerGroup = L.layerGroup();
+        counts.districts[sheet.name] = 0;
+        counts.schools[sheet.name] = 0;
+        counts.charters[sheet.name] = 0;
+    });
+
+    const nonTradLayerGroup = L.layerGroup();
+    const activeSchoolsLayerGroup = L.layerGroup();
+
+    map.on('popupopen', function(e) {
+        window.currentActivePopup = e.popup;
+        const control = document.querySelector('.custom-legend');
+        if (control) control.classList.add('hidden-key');
+
+        // --- REVEAL SCHOOLS WHEN DISTRICT CLICKED ---
+        let srcMarker = e.popup._source;
+        if (srcMarker && srcMarker.distId) {
+            let openedDistId = srcMarker.distId;
+            allSearchData.forEach(item => {
+                if (item.type === 'school' && item.distId === openedDistId && item.hasGrades) {
+                    // --- CHANGED: Only spawn ghost schools if the master toggle is OFF ---
+                    if (!map.hasLayer(activeSchoolsLayerGroup)) {
+                        if (!map.hasLayer(item.specificMarker)) {
+                            item.specificMarker.addTo(map);
+                            item.specificMarker.isDistrictGroupGhost = true;
+                        }
+                    }
+                }
+            });
+        }
+    });
+
+    map.on('popupclose', function(e) {
+        window.currentActivePopup = null;
+        const control = document.querySelector('.custom-legend');
+        if (control) control.classList.remove('hidden-key');
+
+        // Sweep up the individual ghost marker (from the search bar/list clicks)
+        if (e.popup && e.popup._source && e.popup._source.isGhost) {
+            map.removeLayer(e.popup._source);
+            e.popup._source.isGhost = false; // Reset the tag
+        }
+
+        // --- CHANGED: Only sweep district schools if master toggle is OFF ---
+        if (!map.hasLayer(activeSchoolsLayerGroup)) {
+            allSearchData.forEach(item => {
+                if (item.specificMarker && item.specificMarker.isDistrictGroupGhost) {
+                    map.removeLayer(item.specificMarker);
+                    item.specificMarker.isDistrictGroupGhost = false; // Reset the tag
+                }
+            });
+        }
+    });
+
+    // Custom Shapes
+    function getSchoolTriangleIcon(color, isGhost = false) {
+        if (isGhost) {
+            // --- GHOST SCHOOL: Gray fill, thicker colored border ---
+            return L.divIcon({
+                className: 'school-triangle-icon',
+                html: `<svg width="16" height="16" viewBox="0 0 16 16"><polygon points="8,2 14,14 2,14" fill="#000000" stroke="${color}" stroke-width="2.5" fill-opacity="0.9"/></svg>`,
+                iconSize: [16, 16], iconAnchor: [8, 8], popupAnchor: [0, -8]
+            });
+        } else {
+            // --- ACTIVE SCHOOL: Original solid color fill, white border ---
+            return L.divIcon({
+                className: 'school-triangle-icon',
+                html: `<svg width="16" height="16" viewBox="0 0 16 16"><polygon points="8,1 15,14 1,14" fill="${color}" stroke="#fff" stroke-width="1.5" fill-opacity="0.9"/></svg>`,
+                iconSize: [16, 16], iconAnchor: [8, 8], popupAnchor: [0, -8]
+            });
+        }
+    }
+
+    function getSquareIcon(color) {
+        return L.divIcon({
+            className: '',
+            html: `<div style="background-color:${color}; width:12px; height:12px; border:1.5px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>`,
+            iconSize: [12, 12], iconAnchor: [6, 6], popupAnchor: [0, -6]
+        });
+    }
+
+    const formatLink = (url) => {
+        if (!url || url.trim() === "" || url.toLowerCase() === "nan") return "N/A";
+        let href = url.trim();
+        if (!href.toLowerCase().startsWith('http')) href = 'https://' + href;
+        let displayUrl = href.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        if (displayUrl.length > 35) displayUrl = displayUrl.substring(0, 32) + '...';
+        return `<a href="${href}" target="_blank">${displayUrl}</a>`;
+    };
+
+	const getDirectLinkHtml = (label, url) => {
+        if (!url || url.trim() === "" || url.toLowerCase() === "nan") return "";
+        let href = url.trim();
+        if (!href.toLowerCase().startsWith('http')) href = 'https://' + href;
+        return `<div>&#128279; <a href="${href}" target="_blank" style="font-weight:bold; color:#007bff; text-decoration:none;">${label}</a></div>`;
+    };
+
+    const formatMixedText = (text) => {
+        if (!text || text.trim() === "" || text.toLowerCase() === "nan") return "N/A";
+        let t = text.trim();
+        // If the entire text is a single URL, make it clickable. Otherwise, leave it as plain text.
+        if (t.toLowerCase().startsWith('http') || t.toLowerCase().startsWith('www.')) {
+            let href = t.toLowerCase().startsWith('http') ? t : 'https://' + t;
+            let displayUrl = href.replace(/^https?:\/\//, '').replace(/\/$/, '');
+            if (displayUrl.length > 30) displayUrl = displayUrl.substring(0, 27) + '...';
+            return `<a href="${href}" target="_blank">${displayUrl}</a>`;
+        }
+        return t;
+    };
+
+    window.shareDistrict = function(name) {
+        const baseUrl = window.location.href.split('?')[0];
+        const deepLink = `${baseUrl}?district=${encodeURIComponent(name)}`;
+        if (navigator.share) { navigator.share({ title: 'LifeWise Map', url: deepLink }).catch(console.error); }
+        else { prompt("Copy this link to share the specific view:", deepLink); }
+    };
+
+    window.updatePopup = function(distId, screenType, arg = null) {
+        setTimeout(() => {
+            if (window.currentActivePopup) {
+                const newHtml = renderPopupScreen(distId, screenType, arg);
+                window.currentActivePopup.setContent(newHtml);
+                window.currentActivePopup.update();
+            }
+        }, 10);
+    };
+
+    window.snapToSchool = function(distId, sIdx) {
+        setTimeout(() => {
+            const target = allSearchData.find(m => m.distId === distId && m.schoolIdx === sIdx);
+            if (target && target.specificMarker) {
+                map.closePopup();
+
+                // --- NEW: Add the marker and tag it as a temporary 'ghost' ---
+                if (!map.hasLayer(target.specificMarker)) {
+                    target.specificMarker.addTo(map);
+                    target.specificMarker.isGhost = true;
+                }
+                // -------------------------------------------------------------
+
+                map.flyTo(target.specificMarker.getLatLng(), 15, { animate: true, duration: 0.5 });
+                setTimeout(() => target.specificMarker.openPopup(), 600);
+            }
+        }, 10);
+    };
+
+    window.flyToDistrict = function(targetId) {
+        setTimeout(() => {
+            const target = allSearchData.find(m => m.distId === targetId && m.schoolIdx === null);
+            if (target && target.parentMarker) {
+                map.closePopup();
+                // ADD THIS LINE:
+                if (!map.hasLayer(target.parentMarker)) target.parentMarker.addTo(map);
+
+                map.flyTo(target.parentMarker.getLatLng(), 13, { animate: true, duration: 0.5 });
+                setTimeout(() => target.parentMarker.openPopup(), 600);
+            }
+        }, 10);
+    };
+
+    window.renderPopupScreen = function(distKey, screenType, schoolIdx = null) {
+        const dist = districtsData[distKey];
+        if (!dist) return "Error loading data.";
+
+        // --- NEW: Charter District Logic ---
+        let isCharterDistrict = false;
+        let dType = (dist.meta['Dist. Type'] || '').toString().trim();
+
+        // Condition 1: Dist. Type starts with a 7
+        if (dType.startsWith('7')) {
+            isCharterDistrict = true;
+        }
+        // Condition 2: ALL schools in the district are charter schools (must have at least 1 school)
+        else if (dist.schools && dist.schools.length > 0) {
+            let allCharter = true;
+            for (let i = 0; i < dist.schools.length; i++) {
+                let sCharter = (dist.schools[i]['Charter School'] || '').toString().toLowerCase();
+                if (!sCharter.includes('yes')) {
+                    allCharter = false;
+                    break;
+                }
+            }
+            if (allCharter) isCharterDistrict = true;
+        }
+
+        // Generate the exact same badge used for individual charter schools
+        let districtCharterBadge = isCharterDistrict ? `<span style="background:#17a2b8; color:#fff; padding:2px 5px; border-radius:3px; font-size:10px; margin-left:5px; vertical-align:middle;">Charter</span>` : "";
+        // -----------------------------------
+
+        let html = `<div class="app-popup">`;
+
+        // ------------------------------------
+        // MAIN SCREEN (District, Umbrella, Region)
+        // ------------------------------------
+        if (screenType === 'main') {
+
+            // --- NEW: Back button to return to the parent Umbrella ---
+            if (dist.type === 'region') {
+                const parentUmbrellaId = dist.meta['Dist. Code'];
+                html += `<div class="back-btn" onclick="flyToDistrict('${parentUmbrellaId}')" style="display:block;"> to District Region Umbrella</div>`;
+            }
+            // ---------------------------------------------------------
+
+            if (dist.type === 'umbrella') {
+                html += `<div style="background:#fff3cd; border-left:4px solid #dc3545; padding:8px; margin-bottom:10px; font-size:11px; color:#856404; text-align:center;">
+                            <b style="font-size:12px; color:#dc3545;">District-Wide Umbrella Campaign</b><br>
+                            This is a general interest page. See the active regions below for specific targeted programs.
+                         </div>`;
+            } else {
+                let lwSchoolsCount = dist.schools.filter(s => s['Grades Served'] && s['Grades Served'].trim() !== '').length;
+                let topHeader = dist.phaseNum >= 10
+                    ? `LifeWise is Live<br><span style="font-size:11px; color:#555; font-weight:normal;">Schools with LifeWise: ${lwSchoolsCount}</span>`
+                    : `LifeWise Launch Step: ${dist.phaseNum}<br><span style="font-size:11px; color:#555; font-weight:normal;">Interest List Signatures: ${dist.signatures || '0'}</span>`;
+                html += `<div class="popup-header-red">${topHeader}</div>`;
+            }
+
+            if (dist.isNonTraditional) {
+                html += `<div style="background:#e2e3e5; padding:4px; text-align:center; font-weight:bold; font-size:10px; margin-bottom:8px; border-radius:3px;">Non-traditional School</div>`;
+            }
+
+            html += `<div class="app-row"><span class="app-label">Dist. Name</span><span class="app-val"><b>${dist.meta['Dist. Name']}</b>${districtCharterBadge}</span></div>`;
+
+            if (dist.type === 'region' && dist.regionName) {
+                html += `<div class="app-row"><span class="app-label">Dist. Region</span><span class="app-val">${dist.regionName}</span></div>`;
+            }
+
+            html += `<div class="app-row"><span class="app-label">Dist. Address</span><span class="app-val">${dist.meta['Dist. Address'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Phone</span><span class="app-val">${dist.meta['Dist. Phone'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. URL</span><span class="app-val">${formatLink(dist.meta['Dist. URL'])}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Type</span><span class="app-val">${dist.meta['Dist. Type'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Locale</span><span class="app-val">${dist.meta['Dist. Locale'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Charter Status</span><span class="app-val">${dist.meta['Dist. Charter Status'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Total Number of Schools</span><span class="app-val">${dist.meta['Dist. Total Number of Schools'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Total Number of Charter Schools</span><span class="app-val">${dist.meta['Dist. Total Number of Charter Schools'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Total Students, All Grades</span><span class="app-val">${dist.meta['Dist. Total Students, All Grades'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Pupil/Teacher Ratio</span><span class="app-val">${dist.meta['Dist. Pupil/Teacher Ratio'] || 'N/A'}</span></div>`;
+
+            // --- NEW: District Policy & Media Links ---
+            let linksHtml = getDirectLinkHtml("RTRI Policy", dist.meta['RTRI Policy']) +
+                            getDirectLinkHtml("Public Records", dist.meta['Public Records']) +
+                            getDirectLinkHtml("Local Issues", dist.meta['Local Issues']) +
+                            getDirectLinkHtml("Local Media", dist.meta['Local Media']);
+            if (linksHtml) {
+                html += `<div style="margin-top: 10px; margin-bottom: 10px; border-top: 1px solid #eee; padding-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px;">${linksHtml}</div>`;
+            }
+
+            // BUTTONS ROUTING
+            if (dist.type === 'umbrella') {
+                let regions = window.districtsByCode[dist.meta['Dist. Code']].filter(d => d.type === 'region');
+                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_details')">Lifewise Divisional Regions (${regions.length})</button>`;
+                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_lifewise')">LifeWise District Info</button>`;
+            } else if (dist.type === 'region') {
+                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_details')">Schools Tracked by LW in Region (${dist.schools.length})</button>`;
+                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_lifewise')">LifeWise Regional Info</button>`;
+            } else { // Single District
+                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_details')">Schools Tracked by LW in District (${dist.schools.length})</button>`;
+                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_lifewise')">LifeWise District Info</button>`;
+            }
+
+            const safeName = dist.name.replace(/'/g, "\\'");
+            html += `<button onclick="shareDistrict('${safeName}')" class="popup-share-btn">Share Info</button>`;
+        }
+
+        // ------------------------------------
+        // TARGETED SCHOOLS / REGIONS LIST
+        // ------------------------------------
+        else if (screenType === 'district_details') {
+            html += `<div class="back-btn" onclick="updatePopup('${distKey}', 'main')"></div>`;
+
+            if (dist.type === 'umbrella') {
+                let regions = window.districtsByCode[dist.meta['Dist. Code']].filter(d => d.type === 'region');
+                html += `<h4 style="margin:0 0 10px 0; border-bottom:1px solid #ccc;">Lifewise Divisional Regions ${districtCharterBadge}</h4>`;
+                html += `<div class="scroll-box">`;
+                regions.forEach(r => {
+
+                    // --- CHANGED: Now counts ALL tracked schools, not just active ones ---
+                    let rSchools = r.schools.length;
+
+                    html += `<div class="school-link" onclick="flyToDistrict('${r.id}')">${r.regionName} (${rSchools} Schools Tracked by LW)</div>`;
+                });
+                html += `</div>`;
+            } else {
+                let listTitle = dist.type === 'region' ? "Schools Tracked by LW in Region" : "Schools Tracked by LW in District";
+                html += `<h4 style="margin:0 0 10px 0; border-bottom:1px solid #ccc;">${listTitle}</h4>`;
+                html += `<div class="scroll-box">`;
+
+                if (dist.schools.length === 0) { html += `<p>No schools listed.</p>`; }
+
+                // Sort participating schools to the top of the list
+                let sortedSchools = [...dist.schools].sort((a, b) => {
+                    let aHas = a['Grades Served'] && a['Grades Served'].trim() !== '';
+                    let bHas = b['Grades Served'] && b['Grades Served'].trim() !== '';
+                    if (aHas && !bHas) return -1;
+                    if (!aHas && bHas) return 1;
+                    return 0;
+                });
+
+                sortedSchools.forEach(school => {
+                    let idx = dist.schools.indexOf(school);
+                    let isCharter = school['Charter School'] && school['Charter School'].toString().toLowerCase().includes('yes');
+                    let hasLifeWise = school['Grades Served'] && school['Grades Served'].trim() !== '';
+
+                    let charterBadge = isCharter ? `<span style="background:#17a2b8; color:#fff; padding:1px 4px; border-radius:3px; font-size:9px; margin-left:4px;">Charter</span>` : "";
+                    let lwBadge = hasLifeWise ? `<span style="background:#dc3545; color:#fff; padding:1px 4px; border-radius:3px; font-size:9px; margin-left:4px;">LifeWise</span>` : "";
+
+                    html += `<div class="school-link" onclick="snapToSchool('${distKey}', ${idx})">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="${hasLifeWise ? 'font-weight:bold; color:#d32f2f;' : 'color:#333;'}">${school['School Name']}</span>
+                                    <span style="white-space:nowrap;">${charterBadge}${lwBadge}</span>
+                                </div>
+                             </div>`;
+                });
+                html += `</div>`;
+            }
+        }
+
+        // ------------------------------------
+        // SCHOOL DETAILS
+        // ------------------------------------
+        else if (screenType === 'school_details' && schoolIdx !== null) {
+            const school = dist.schools[schoolIdx];
+            let isCharter = school['Charter School'] && school['Charter School'].toString().toLowerCase().includes('yes');
+            let charterHeaderBadge = isCharter ? `<span style="background:#17a2b8; color:#fff; padding:2px 5px; border-radius:3px; font-size:10px; margin-left:5px; vertical-align:middle;">Charter</span>` : "";
+
+            html += `<div class="back-btn" onclick="flyToDistrict('${distKey}')"></div>`
+            html += `<div style="text-align:center; font-size:10px; color:#666; margin-bottom:10px;">${dist.meta['State'] || ''} | ${dist.meta['Dist. Name'] || ''}</div>`;
+            html += `<h4 style="margin:0 0 10px 0; color:#333;">${school['School Name'] || 'Unknown'} ${charterHeaderBadge}</h4>`;
+
+            html += `<div class="app-row"><span class="app-label">School Name</span><span class="app-val">${school['School Name'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">School Address</span><span class="app-val">${school['School Address'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">School Phone</span><span class="app-val">${school['School Phone'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">School URL</span><span class="app-val">${formatLink(school['School URL'])}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Charter School</span><span class="app-val">${school['Charter School'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">School Type</span><span class="app-val">${school['School Type'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Total Students</span><span class="app-val">${school['School Total Students'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Student/Teacher Ratio</span><span class="app-val">${school['School Student/Teacher Ratio'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Lunch Program</span><span class="app-val">${school['School Lunch Program Status'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Free/Reduced Lunch</span><span class="app-val">${school['School Free and Reduced Lunch Student Totals'] || 'N/A'}</span></div>`;
+
+            html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'local_lifewise', ${schoolIdx})">Local LifeWise Info</button>`;
+        }
+
+        // ------------------------------------
+        // LOCAL LIFEWISE (FROM DISTRICT/REGION)
+        // ------------------------------------
+        else if (screenType === 'district_lifewise') {
+            html += `<div class="back-btn" onclick="updatePopup('${distKey}', 'main')"></div>`;
+
+            // --- NEW: Dynamic Header Text ---
+            let infoTitle = dist.type === 'region' ? "LifeWise Regional Info" : "LifeWise District Info";
+            html += `<h4 style="margin:0 0 10px 0; color:#d32f2f;">${infoTitle}</h4>`;
+            // --------------------------------
+
+            let participating = dist.schools.filter(s => s['Grades Served'] && s['Grades Served'].trim() !== '');
+            if (participating.length > 0) {
+                html += `<div style="font-weight:bold; font-size:11px; margin-bottom:4px; color:#555;">Participating Schools:</div>`;
+                html += `<ul style="margin:0 0 10px 0; padding-left:15px; font-size:11px;">`;
+                participating.forEach(s => { html += `<li>${s['School Name']} (Grades: ${s['Grades Served']})</li>`; });
+                html += `</ul>`;
+            }
+
+            html += `<div class="app-row"><span class="app-label">Director Name</span><span class="app-val">${dist.meta['Director Name'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Director Email</span><span class="app-val">${dist.meta['Director Email'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Teachers Names</span><span class="app-val">${dist.meta['Teachers Names'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Teachers Emails</span><span class="app-val">${dist.meta['Teachers Emails'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Mailing Address</span><span class="app-val">${dist.meta['Mailing Address'] || 'N/A'}</span></div>`;
+           // --- NEW: Churches and Sponsors (District Level) ---
+            html += `<div class="app-row"><span class="app-label">Connected Churches</span><span class="app-val">${formatMixedText(dist.meta['Connected Churches'])}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(dist.meta['Local Business Sponsors'])}</span></div>`;
+        }
+
+        // ------------------------------------
+        // LOCAL LIFEWISE (FROM SCHOOL)
+        // ------------------------------------
+        else if (screenType === 'local_lifewise' && schoolIdx !== null) {
+            const school = dist.schools[schoolIdx];
+            html += `<div class="back-btn" onclick="updatePopup('${distKey}', 'school_details', ${schoolIdx})"></div>`;
+            html += `<h4 style="margin:0 0 10px 0; color:#d32f2f;">Local LifeWise Info</h4>`;
+
+            html += `<div class="app-row"><span class="app-label">School Name</span><span class="app-val">${school['School Name']}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Grades Served</span><span class="app-val">${school['Grades Served'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Director Name</span><span class="app-val">${school['Director Name'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Director Email</span><span class="app-val">${school['Director Email'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Teachers Names</span><span class="app-val">${school['Teachers Names'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Teachers Emails</span><span class="app-val">${school['Teachers Emails'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Mailing Address</span><span class="app-val">${school['Mailing Address'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">LW URL</span><span class="app-val">${formatLink(school['LW URL'])}</span></div>`;
+
+            // --- NEW: Churches and Sponsors (School Level) ---
+            html += `<div class="app-row"><span class="app-label">Connected Churches</span><span class="app-val">${formatMixedText(school['Connected Churches'])}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(school['Local Business Sponsors'])}</span></div>`;
+        }
+
+        html += `</div>`;
+        return html;
+    };
+
     fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
         .then(res => res.json())
         .then(data => {
             const stateLayer = L.geoJSON(data, {
-                style: {
-                    color: "#6c757d",
-                    weight: 1.5,
-                    fillColor: "#007bff",
-                    fillOpacity: 0.02
-                },
+                style: { color: "#6c757d", weight: 1.5, fillColor: "#007bff", fillOpacity: 0.02 },
                 onEachFeature: function(feature, layer) {
                     layer.on('click', function(e) {
-                        L.DomEvent.stopPropagation(e.originalEvent); // Prevent underlying map click
+                        L.DomEvent.stopPropagation(e.originalEvent);
 
                         let stateCounts = {};
                         sheets.forEach(s => stateCounts[s.name] = 0);
-                        let totalInState = 0;
-                        let totalSchoolsServedInState = 0;
-                        let countedInState = new Set(); // Prevents double counting districts in state summary
+                        let targetedDists = new Set();
+                        let totalSchoolsWithLW = new Set();
 
-                        allMarkers.forEach(m => {
-                            const lng = m.marker.getLatLng().lng;
-                            const lat = m.marker.getLatLng().lat;
-                            const pt = turf.point([lng, lat]);
-                            
+                        Object.values(districtsData).forEach(dist => {
+                            if (isNaN(parseFloat(dist.lat)) || isNaN(parseFloat(dist.lon))) return;
                             try {
+                                const pt = turf.point([parseFloat(dist.lon), parseFloat(dist.lat)]);
                                 if (turf.booleanPointInPolygon(pt, feature)) {
-                                    const row = m.rowData;
-                                    const distKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'district id') || Object.keys(row).find(k => k.trim().toLowerCase() === 'district');
-                                    const distId = distKey && row[distKey] ? row[distKey].trim() : null;
-                                    
-                                    const schoolsKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'schools served');
-                                    const schoolsServedVal = (schoolsKey && row[schoolsKey]) ? parseInt(row[schoolsKey], 10) : 0;
-                                    const validSchoolsServed = !isNaN(schoolsServedVal) ? schoolsServedVal : 0;
 
-                                    if (distId) {
-                                        if (!countedInState.has(distId)) {
-                                            stateCounts[m.layerName]++;
-                                            totalInState++;
-                                            totalSchoolsServedInState += validSchoolsServed;
-                                            countedInState.add(distId);
-                                        }
-                                    } else {
-                                        // Fallback if no ID/Name found
-                                        stateCounts[m.layerName]++;
-                                        totalInState++;
-                                        totalSchoolsServedInState += validSchoolsServed;
+                                    if (dist.type !== 'umbrella') {
+                                        let sName = sheets.find(s => s.stepNum === dist.phaseNum)?.name || sheets[0].name;
+                                        stateCounts[sName]++;
                                     }
+
+                                    let hasGrades = dist.schools.some(s => s['Grades Served'] && s['Grades Served'].trim() !== '');
+
+                                    // --- NEW: Add ALL tracked districts to the count, regardless of phase ---
+                                    targetedDists.add(dist.meta['Dist. Code']);
+
+                                    dist.schools.forEach(s => {
+                                        if (s['Grades Served'] && s['Grades Served'].trim() !== '') {
+                                            totalSchoolsWithLW.add(`${dist.meta['Dist. Code']}_${s['School Name']}`);
+                                        }
+                                    });
                                 }
-                            } catch (err) { }
+                            } catch (err) {}
                         });
 
-                        let popupHtml = `<div style="font-family: 'Segoe UI', Tahoma, sans-serif; min-width: 170px;">
-                            <h3 style="margin: 0 0 10px 0; font-size: 15px; border-bottom: 2px solid #eee; padding-bottom: 5px;">${feature.properties.name} Summary</h3>
-                            <table style="width: 100%; font-size: 12px; border-collapse: collapse;">`;
-                        
+                        let popupHtml = `<div style="font-family:'Segoe UI', Tahoma, sans-serif; min-width:240px; max-height:400px; overflow-y:auto; padding-right:5px;">
+                            <h3 style="margin:0 0 10px 0; font-size:15px; border-bottom:2px solid #eee; padding-bottom:5px;">${feature.properties.name} Summary</h3>`;
+
+                        let sData = window.stateMetaData ? window.stateMetaData[feature.properties.name] : null;
+                        if (sData) {
+                            popupHtml += `<table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:10px;">
+                                <tr><td style="padding:2px 0; color:#555;">State Education Agency Name:</td><td style="text-align:right;"><b>${sData['State Education Agency Name'] || 'N/A'}</b></td></tr>
+                                <tr><td style="padding:2px 0; color:#555;">State DOE Phone Number:</td><td style="text-align:right;"><b>${sData['State DOE Phone Number'] || 'N/A'}</b></td></tr>
+                                <tr><td style="padding:2px 0; color:#555;">State DOE URL:</td><td style="text-align:right;"><b>${formatLink(sData['State DOE URL'])}</b></td></tr>
+                                <tr><td style="padding:2px 0; color:#555;">State Total Number of Districts:</td><td style="text-align:right;"><b>${sData['State Total Number of Districts'] || 'N/A'}</b></td></tr>
+                                <tr><td style="padding:2px 0; color:#555;">State Total Number of Public Schools:</td><td style="text-align:right;"><b>${sData['State Total Number of Public Schools'] || 'N/A'}</b></td></tr>
+                                <tr><td style="padding:2px 0; color:#555;">State Total Number of Charter Schools:</td><td style="text-align:right;"><b>${sData['State Total Number of Charter Schools'] || 'N/A'}</b></td></tr>
+                                <tr><td style="padding:2px 0; color:#555;">State Pupil/Teacher Ratio:</td><td style="text-align:right;"><b>${sData['State Pupil/Teacher Ratio'] || 'N/A'}</b></td></tr>
+                            </table>`;
+                        }
+
+                        popupHtml += `<div style="border-top: 2px solid #ccc; margin-bottom: 8px; padding-top:8px;">
+                            <b style="font-size:12px; color:#d32f2f;">LifeWise Targets in State</b>
+                        </div>
+                        <table style="width: 100%; font-size: 11px; border-collapse: collapse; margin-bottom:8px;">
+                            <tr><td style="padding: 2px 0;">Number of Districts Targeted By LifeWIse:</td><td style="text-align: right;"><b>${targetedDists.size}</b></td></tr>
+                            <tr><td style="padding: 2px 0;">Total Number of Schools w/ LifeWise:</td><td style="text-align: right;"><b>${totalSchoolsWithLW.size}</b></td></tr>
+                        </table>`;
+
+                        popupHtml += `<div style="font-weight:bold; font-size:11px; margin-bottom:4px;">District Step Count Summary:</div>
+                        <table style="width: 100%; font-size: 11px; border-collapse: collapse;">`;
                         sheets.forEach(s => {
                             if (stateCounts[s.name] > 0) {
                                 popupHtml += `<tr>
-                                    <td style="padding: 4px 0;">
-                                        <span style="display: inline-block; width: 10px; height: 10px; background-color: ${s.color}; border: 1px solid #fff; border-radius: 50%; opacity: 0.8; margin-right: 5px; vertical-align: -1px; box-sizing: border-box;"></span>
-                                        <b>${s.name}</b>
-                                    </td>
-                                    <td style="text-align: right; padding: 4px 0;">${stateCounts[s.name]}</td>
+                                    <td style="padding: 2px 0;"><span style="display:inline-block; width:8px; height:8px; background-color:${s.color}; border:1px solid #fff; border-radius:50%; margin-right:5px;"></span>${s.name}</td>
+                                    <td style="text-align: right;">${stateCounts[s.name]}</td>
                                 </tr>`;
                             }
                         });
+                        popupHtml += `</table></div>`;
 
-                        popupHtml += `<tr style="border-top: 1px solid #ccc;">
-                            <td style="padding: 6px 0;"><b>Total Districts Tracked:</b></td>
-                            <td style="text-align: right; padding: 6px 0;"><b>${totalInState}</b></td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 6px 0; border-top: 1px solid #eee;"><b>Total Schools Served:</b></td>
-                            <td style="text-align: right; padding: 6px 0; border-top: 1px solid #eee;"><b>${totalSchoolsServedInState}</b></td>
-                        </tr>
-                        </table></div>`;
-
-                        L.popup()
-                            .setLatLng(e.latlng)
-                            .setContent(popupHtml)
-                            .openOn(map);
+                        L.popup().setLatLng(e.latlng).setContent(popupHtml).openOn(map);
                     });
                 }
             }).addTo(map);
-
-            stateLayer.bringToBack(); // Puts state borders behind markers
+            stateLayer.bringToBack();
         });
 
-    // Event Listeners to Hide/Show Key when popup opens/closes
-    map.on('popupopen', function() {
-        const control = document.querySelector('.leaflet-control-layers');
-        if (control) control.classList.add('hidden-key');
-    });
+    async function loadMapData() {
+        try {
+            const response = await fetch("./map_data.json?nocache=" + new Date().getTime());
+            const rawData = await response.json();
+            const districtsArray = rawData.districts || [];
+            window.stateMetaData = rawData.state_meta || {};
+            window.districtsByCode = {};
 
-    map.on('popupclose', function() {
-        const control = document.querySelector('.leaflet-control-layers');
-        if (control) control.classList.remove('hidden-key');
-    });
-
-    sheets.forEach(sheet => {
-        sheet.layerGroup = L.layerGroup().addTo(map);
-        sheetCounts[sheet.name] = 0;
-        const id = `count-${sheet.name.replace(/\s+/g, '')}`;
-        const label = `<b style="color:${sheet.color}">${sheet.name}</b> <span id="${id}" class="marker-count">(...)</span><span class="layer-desc">${sheet.desc}</span>`;
-        layerControl.addOverlay(sheet.layerGroup, label);
-    });
-
-    async function loadSheet(sheet, specificUrl) {
-        return new Promise(async (resolve) => {
-            const urlToUse = specificUrl || sheet.url;
-            const yourWorkerUrl = "https://sea-map-proxy.zparrish.workers.dev/"; 
-            const proxyUrl = `${yourWorkerUrl}?url=${encodeURIComponent(urlToUse)}`;
-            
-            try {
-                const response = await fetch(proxyUrl);
-                const csvText = await response.text();
-                
-                Papa.parse(csvText, {
-                    header: true, skipEmptyLines: true,
-                    complete: function(results) {
-                        results.data.forEach(row => {
-                            const latKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LAT');
-                            const lonKey = Object.keys(row).find(k => k.trim().toUpperCase() === 'LON');
-                            const lat = parseFloat(row[latKey]);
-                            const lon = parseFloat(row[lonKey]);
-
-                            if (!isNaN(lat) && !isNaN(lon)) {
-                                
-                                // Deduplicate the district count for the sidebar map key
-                                const distKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'district id') || Object.keys(row).find(k => k.trim().toLowerCase() === 'district');
-                                const distId = distKey && row[distKey] ? row[distKey].trim() : null;
-
-                                if (distId) {
-                                    if (!countedDistricts.has(distId)) {
-                                        sheetCounts[sheet.name]++;
-                                        countedDistricts.add(distId);
-                                    }
-                                } else {
-                                    // Fallback if there is no identifier column
-                                    sheetCounts[sheet.name]++;
-                                }
-
-                                let table = `<div style="max-height:150px; overflow-y:auto;"><table style="font-size:12px; width:100%;">`;
-                                
-                                const priorityFields = ["District", "Schools Served", "School Name", "Grades"];
-                                const processedKeys = new Set();
-                                let districtName = "this district";
-
-                                const formatVal = (val) => {
-                                    if (!val) return val;
-                                    let text = val.trim();
-                                    let url = text;
-                                    let isLink = false;
-
-                                    if (!text.includes(' ')) {
-                                        if (url.toLowerCase().startsWith('http://') || url.toLowerCase().startsWith('https://')) {
-                                            isLink = true;
-                                        } 
-                                        else if (url.toLowerCase().startsWith('www.')) {
-                                            url = 'https://' + url;
-                                            isLink = true;
-                                        }
-                                        else if (url.match(/\.(com|org|net|edu|gov|io)\b/i)) {
-                                            url = 'https://' + url;
-                                            isLink = true;
-                                        }
-                                    }
-
-                                    if (isLink) {
-                                        return `<a href="${url}" target="_blank" style="color: #007bff; text-decoration: underline;">${text}</a>`;
-                                    }
-                                    
-                                    return val;
-                                };
-
-                                priorityFields.forEach(field => {
-                                    const key = Object.keys(row).find(k => k.trim() === field);
-                                    if (key && row[key]) {
-                                        table += `<tr><td><b>${key}</b></td><td>${formatVal(row[key])}</td></tr>`;
-                                        processedKeys.add(key);
-                                        if (field === "District") districtName = row[key];
-                                    }
-                                });
-
-                                for (let key in row) { 
-                                    if (row[key] && !processedKeys.has(key)) {
-                                        table += `<tr><td><b>${key}</b></td><td>${formatVal(row[key])}</td></tr>`; 
-                                    }
-                                }
-                                table += `</table>`;
-                                
-                                const safeName = districtName.replace(/'/g, "\\'");
-                                table += `<button onclick="shareDistrict('${safeName}')" class="popup-share-btn">Share District</button>`;
-                                table += `</div>`;
-                                
-                                const dot = L.circleMarker([lat, lon], { 
-                                    radius: 5, fillColor: sheet.color, color: "#fff", weight: 1, fillOpacity: 0.8,
-                                    zIndexOffset: (sheet.stepNum * 50) 
-                                }).bindPopup(table);
-                                
-                                dot.addTo(sheet.layerGroup);
-                                dot.addTo(markerGroup);
-                                allMarkers.push({ marker: dot, rowData: row, layerName: sheet.name, fullString: Object.values(row).join(" ").toLowerCase() });
-                            }
-                        });
-                        const countEl = document.getElementById(`count-${sheet.name.replace(/\s+/g, '')}`);
-                        if (countEl) countEl.innerHTML = `(${sheetCounts[sheet.name]})`;
-                        resolve();
-                    },
-                    error: () => resolve()
-                });
-            } catch (e) { resolve(); }
-        });
-    }
-
-    async function startSequentialLoad() {
-        for (const sheet of sheets) {
-            if (sheet.urls) {
-                await Promise.all(sheet.urls.map(url => loadSheet(sheet, url)));
-            } else {
-                await loadSheet(sheet);
-            }
-        }
-        
-        const params = new URLSearchParams(window.location.search);
-        const districtParam = params.get('district');
-        if (districtParam) {
-            const decodedName = decodeURIComponent(districtParam).toLowerCase().trim();
-            const target = allMarkers.find(m => {
-                const row = m.rowData;
-                const districtKey = Object.keys(row).find(k => k.trim() === "District");
-                if (districtKey && row[districtKey]) {
-                    return row[districtKey].toLowerCase().trim() === decodedName;
-                }
-                return false;
+            districtsArray.forEach(dist => {
+                districtsData[dist.id] = dist;
+                const code = dist.meta['Dist. Code'];
+                if (!window.districtsByCode[code]) window.districtsByCode[code] = [];
+                window.districtsByCode[code].push(dist);
             });
 
-            if (target) {
-                map.flyTo(target.marker.getLatLng(), 15);
-                target.marker.openPopup();
-            }
-        }
+            districtsArray.forEach(dist => {
+                const dLat = parseFloat(dist.lat);
+                const dLon = parseFloat(dist.lon);
+                if (isNaN(dLat) || isNaN(dLon)) return;
+
+                let sheet = sheets.find(s => s.stepNum === dist.phaseNum) || sheets[0];
+                let distDot;
+
+                // --- NEW: Calculate Charter Status to drive the Toggle and Square Icon ---
+                let isCharterDistrict = false;
+                let dType = (dist.meta['Dist. Type'] || '').toString().trim();
+                if (dType.startsWith('7')) isCharterDistrict = true;
+                else if (dist.schools && dist.schools.length > 0) {
+                    let allCharter = true;
+                    for (let i = 0; i < dist.schools.length; i++) {
+                        let sCharter = (dist.schools[i]['Charter School'] || '').toString().toLowerCase();
+                        if (!sCharter.includes('yes')) { allCharter = false; break; }
+                    }
+                    if (allCharter) isCharterDistrict = true;
+                }
+                let isNonTradOrCharter = dist.isNonTraditional || isCharterDistrict;
+                // -------------------------------------------------------------------------
+
+                // --- STRICT Z-INDEX LAYERING ---
+                let zIndex = 0;
+                if (dist.type === 'umbrella') zIndex = 5;
+                else if (dist.phaseNum === 0) zIndex = 0;
+                else zIndex = 20 + (dist.phaseNum * 10);
+
+                if (isNonTradOrCharter) {
+                    distDot = L.marker([dLat, dLon], { icon: getSquareIcon(sheet.color), zIndexOffset: zIndex });
+                    distDot.isNonTrad = true;
+                    distDot.addTo(nonTradLayerGroup);
+                    counts.charters[sheet.name]++; // New isolated count
+                } else {
+                    if (dist.type === 'umbrella') {
+                        const rainbowHtml = `<div style="display:block; box-sizing:border-box; width: 10px; height: 10px; border-radius: 50%; background: conic-gradient(#ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #8b00ff, #ff0000); border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.4);"></div>`;
+                        distDot = L.marker([dLat, dLon], {
+                            icon: L.divIcon({ className: '', html: rainbowHtml, iconSize: [11,11], iconAnchor: [5.5,5.5], popupAnchor: [0,-5.5] }),
+                            zIndexOffset: zIndex
+                        });
+                        distDot.addTo(sheet.layerGroup).addTo(markerGroup);
+                    } else {
+                        distDot = L.circleMarker([dLat, dLon], {
+                            radius: 4, fillColor: sheet.color, color: "#fff", weight: 1.5, fillOpacity: 0.9, zIndexOffset: zIndex
+                        });
+                        distDot.addTo(sheet.layerGroup).addTo(markerGroup);
+                    }
+                    counts.districts[sheet.name]++; // New isolated count
+                }
+
+                distDot.bindPopup(() => { return renderPopupScreen(dist.id, 'main'); });
+                distDot.distId = dist.id;
+
+                const displayName = dist.regionName ? `${dist.name} - ${dist.regionName}` : dist.name;
+
+                allSearchData.push({
+                    distId: dist.id, schoolIdx: null, specificMarker: distDot, parentMarker: distDot,
+                    layerName: sheet.name, name: displayName, type: dist.type,
+                    fullString: `${displayName} ${dist.meta['State']} ${dist.meta['Dist. Address']}`.toLowerCase()
+                });
+
+                dist.schools.forEach((school, sIdx) => {
+                    const sLat = parseFloat(school['School LAT']);
+                    const sLon = parseFloat(school['School LON']);
+                    let hasGrades = school['Grades Served'] && school['Grades Served'].trim() !== '';
+
+                    // --- NEW: Generate markers for ALL schools with valid coordinates ---
+                    if (!isNaN(sLat) && !isNaN(sLon)) {
+                        let sStep = parseInt(school['Program Launch Step'] || "0", 10);
+                        let schoolSheet = sheets.find(s => s.stepNum === sStep) || sheets[0];
+
+                        // Flag it as a ghost if it does NOT have active grades
+                        let isGhostMarker = !hasGrades;
+
+                        let schoolTriangle = L.marker([sLat, sLon], {
+                            // Pass the school color AND the ghost flag we just created
+                            icon: getSchoolTriangleIcon(schoolSheet.color, isGhostMarker),
+                            zIndexOffset: 15 // Explicitly layered above umbrella (5) but below Step 1 (30)
+                        });
+
+                        schoolTriangle.bindPopup(() => { return renderPopupScreen(dist.id, 'school_details', sIdx); });
+
+                        // --- NEW: Only paint the marker on load if it has active grades ---
+                        // (If it doesn't have grades, it stays hidden in memory until clicked)
+                        // --- NEW: Add active schools to the master legend toggle ---
+                        if (hasGrades) {
+                            schoolTriangle.addTo(activeSchoolsLayerGroup);
+                            counts.schools[schoolSheet.name]++; // Record school totals
+                        }
+
+                        // --- EXACT NAME MAP FIX ---
+                        // Search bar correctly catalogs exact School column names
+                        allSearchData.push({
+                            distId: dist.id, schoolIdx: sIdx, specificMarker: schoolTriangle,
+                            parentMarker: distDot, layerName: schoolSheet.name, name: school['School Name'], type: 'school',
+                            fullString: `${school['School Name']} ${displayName}`.toLowerCase(),
+                            hasGrades: hasGrades // <-- ADD THIS LINE BACK!
+                        });
+                    }
+                });
+            });
+
+            // Build Custom Tabbed Legend Control
+            const LegendControl = L.Control.extend({
+                options: { position: window.innerWidth < 950 ? 'topright' : 'bottomright' },
+                onAdd: function () {
+                    const div = L.DomUtil.create('div', 'custom-legend');
+                    L.DomEvent.disableClickPropagation(div);
+                    L.DomEvent.disableScrollPropagation(div);
+
+                    // Calculate total charter districts
+                    let totalCharters = Object.values(counts.charters).reduce((a, b) => a + b, 0);
+
+                    let html = `
+                        <div class="legend-tabs">
+                            <div class="legend-tab active" onclick="window.switchMapTab('districts', this)">Districts</div>
+                            <div class="legend-tab" onclick="window.switchMapTab('schools', this)">Schools</div>
+                        </div>
+                        <div class="legend-content">
+                            <div class="legend-pane active" id="pane-districts">`;
+
+                    // 1. Build Districts Pane (with toggle checkboxes)
+                    sheets.forEach(s => {
+                        html += `
+                        <div class="legend-row">
+                            <input type="checkbox" checked onchange="window.toggleStepLayer('${s.name}', this.checked)">
+                            <div class="legend-icon-container"><div class="legend-color-dot" style="background-color:${s.color}"></div></div>
+                            <div style="flex:1;"><b style="color:#000; font-family: 'Segoe UI', Tahoma, sans-serif;">${s.name}</b> <span class="marker-count">(${counts.districts[s.name]})</span>
+                            <span class="legend-desc">${s.desc}</span></div>
+                        </div>`;
+                    });
+
+                    // Add the Charter/Non-Traditional Checkbox (Unchecked by default)
+                    html += `
+                        <div class="legend-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc;">
+                            <input type="checkbox" id="charterToggle" onchange="window.toggleCharterLayer(this.checked)">
+                            <div class="legend-icon-container"><div class="legend-color-square" style="background-color:#555"></div></div>
+                            <div style="flex:1;"><b style="color:#000; font-family: 'Segoe UI', Tahoma, sans-serif;">Charter/Non-Trad Districts</b> <span class="marker-count">(${totalCharters})</span>
+                            <span class="legend-desc">Includes all charter and non-traditional districts regardless of step.</span></div>
+                        </div>
+                    </div>`;
+
+                    // 2. Build Schools Pane
+                    html += `<div class="legend-pane" id="pane-schools">
+                                <div class="school-explainer">Only schools with confirmed operational programs are shown. Tracking is done at the district level until there is a live program.</div>`;
+
+                    sheets.forEach(s => {
+                        if(counts.schools[s.name] > 0) {
+                            html += `
+                            <div class="legend-row">
+                                <div class="legend-icon-container">
+                                    <svg width="14" height="14" viewBox="0 0 16 16"><polygon points="8,1 15,14 1,14" fill="${s.color}" stroke="#fff" stroke-width="1.5"/></svg>
+                                </div>
+                                <div style="flex:1;"><b style="color:#000; font-family: 'Segoe UI', Tahoma, sans-serif;">${s.name}</b> <span class="marker-count">(${counts.schools[s.name]})</span></div>
+                            </div>`;
+                        }
+                    });
+
+                    if(Object.values(counts.schools).reduce((a,b)=>a+b,0) === 0) html += `<div>No operational schools found.</div>`;
+
+                    html += `</div></div>`;
+                    div.innerHTML = html;
+                    return div;
+                }
+            });
+
+            map.addControl(new LegendControl());
+
+            // Assign Tab Switching Logic to window
+            window.switchMapTab = function(tab, el) {
+                document.querySelectorAll('.legend-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.legend-pane').forEach(p => p.classList.remove('active'));
+                el.classList.add('active');
+                document.getElementById('pane-' + tab).classList.add('active');
+
+                map.closePopup(); // Sweep up ghost markers
+
+                if (tab === 'districts') {
+                    // Restore district steps based on their checkboxes
+                    sheets.forEach(s => {
+                        const checkbox = document.querySelector(`input[onchange="window.toggleStepLayer('${s.name}', this.checked)"]`);
+                        if(checkbox && checkbox.checked) map.addLayer(s.layerGroup);
+                    });
+
+                    // Restore charter layer based on its checkbox
+                    const charterToggle = document.getElementById('charterToggle');
+                    if (charterToggle && charterToggle.checked) map.addLayer(nonTradLayerGroup);
+                    else map.removeLayer(nonTradLayerGroup);
+
+                    map.removeLayer(activeSchoolsLayerGroup);
+                } else if (tab === 'schools') {
+                    // Hide all district and charter layers, show active schools
+                    sheets.forEach(s => map.removeLayer(s.layerGroup));
+                    map.removeLayer(nonTradLayerGroup);
+                    map.addLayer(activeSchoolsLayerGroup);
+                }
+            };
+
+            // Toggle logic for standard District steps
+            window.toggleStepLayer = function(stepName, isVisible) {
+                const sheet = sheets.find(s => s.name === stepName);
+                if (sheet) {
+                    if (isVisible) {
+                        map.addLayer(sheet.layerGroup);
+
+                        // NEW: If a regular step is turned on, turn off the Charter layer
+                        const charterToggle = document.getElementById('charterToggle');
+                        if (charterToggle && charterToggle.checked) {
+                            charterToggle.checked = false;
+                            map.removeLayer(nonTradLayerGroup);
+                        }
+                    } else {
+                        map.removeLayer(sheet.layerGroup);
+                    }
+                }
+            };
+
+            // Toggle logic for the Charter/Non-Traditional checkbox
+            window.toggleCharterLayer = function(isVisible) {
+                if (isVisible) {
+                    map.addLayer(nonTradLayerGroup);
+
+                    // NEW: Hide all regular steps and uncheck their boxes in the legend
+                    sheets.forEach(s => {
+                        map.removeLayer(s.layerGroup);
+                        const checkbox = document.querySelector(`input[onchange="window.toggleStepLayer('${s.name}', this.checked)"]`);
+                        if (checkbox) checkbox.checked = false;
+                    });
+                } else {
+                    map.removeLayer(nonTradLayerGroup);
+
+                    // NEW: Restore all regular steps and re-check their boxes when Charter is turned off
+                    sheets.forEach(s => {
+                        map.addLayer(s.layerGroup);
+                        const checkbox = document.querySelector(`input[onchange="window.toggleStepLayer('${s.name}', this.checked)"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
+            };
+
+            document.getElementById('loadingOverlay').style.opacity = '0';
+            setTimeout(() => {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) overlay.remove();
+
+                // --- NEW: Sequential Map Reveal Animation ---
+                let stepIndex = 0;
+                function animateLayers() {
+                    if (stepIndex < sheets.length) {
+                        // Adding the layer automatically checks the box in the legend and paints the markers!
+                        map.addLayer(sheets[stepIndex].layerGroup);
+                        stepIndex++;
+
+                        // 500ms delay between each step. Adjust to make it faster/slower!
+                        setTimeout(animateLayers, 500);
+                    }
+                }
+                animateLayers();
+                // --------------------------------------------
+            }, 500);
+
+        } catch (e) { console.error("Data load failed: ", e); }
     }
 
-    startSequentialLoad();
-
-    window.shareDistrict = function(name) {
-        const baseUrl = window.location.href.split('?')[0]; 
-        const deepLink = `${baseUrl}?district=${encodeURIComponent(name)}`;
-        const text = `Check out the status of ${name} on the LifeWise Program Map!`;
-        
-        if (navigator.share) {
-            navigator.share({
-                title: 'LifeWise Program Map',
-                text: text,
-                url: deepLink
-            }).catch(console.error);
-        } else {
-            prompt("Copy this link to share the specific district view:", deepLink); 
-        }
-    };
+    loadMapData();
 
     const searchInput = document.getElementById('mapSearch');
     const resultsList = document.getElementById('resultsList');
+    let searchTimeout = null;
 
     searchInput.addEventListener('input', function() {
-        const query = this.value.toLowerCase().trim();
-        resultsList.innerHTML = ""; 
-        if (query.length < 2) return;
-        const matches = allMarkers.filter(m => m.fullString.includes(query));
-        matches.slice(0, 50).forEach(m => {
-            const li = document.createElement('li'); 
-            li.className = 'result-item';
-            li.innerHTML = `<b>${Object.values(m.rowData)[0]}</b><br><small>${m.layerName}</small>`;
-            li.onclick = () => { map.flyTo(m.marker.getLatLng(), 15); m.marker.openPopup(); };
-            resultsList.appendChild(li);
-        });
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const query = searchInput.value.toLowerCase().trim();
+            resultsList.innerHTML = "";
+            if (query.length < 2) return;
+
+            const matches = [];
+            const seenNames = new Set();
+
+            for (let i = 0; i < allSearchData.length; i++) {
+                if (allSearchData[i].fullString.includes(query)) {
+                    if (seenNames.has(allSearchData[i].name)) continue;
+                    seenNames.add(allSearchData[i].name);
+                    matches.push(allSearchData[i]);
+                    if (matches.length >= 50) break;
+                }
+            }
+
+            matches.forEach(m => {
+                const li = document.createElement('li');
+                li.className = 'result-item';
+
+                if (m.type === 'school') {
+                    li.innerHTML = `<b>${m.name}</b><br><small style="color:#666;">School Data</small>`;
+                } else if (m.type === 'umbrella') {
+                    li.innerHTML = `<b>${m.name}</b><br><small style="color:#dc3545; font-weight:bold;">District Data (Umbrella Campaign)</small>`;
+                } else {
+                    li.innerHTML = `<b>${m.name}</b><br><small style="color:#007bff; font-weight:bold;">District Data (${m.layerName})</small>`;
+                }
+
+                li.onclick = () => {
+                    if (m.type === 'school') { window.snapToSchool(m.distId, m.schoolIdx); }
+                    else { window.flyToDistrict(m.distId); }
+                };
+                resultsList.appendChild(li);
+            });
+        }, 300);
     });
 
-    document.getElementById('btnSearch').addEventListener('click', () => {
-        const event = new Event('input');
-        searchInput.dispatchEvent(event);
-    });
-
+    document.getElementById('btnSearch').addEventListener('click', () => { searchInput.dispatchEvent(new Event('input')); });
     document.getElementById('btnReset').addEventListener('click', () => {
-        searchInput.value = "";
-        resultsList.innerHTML = "";
+        searchInput.value = ""; resultsList.innerHTML = "";
         if(markerGroup.getBounds().isValid()) map.fitBounds(markerGroup.getBounds(), {padding: [50, 50]});
-        window.history.pushState({}, document.title, window.location.pathname);
     });
-
-    document.getElementById('btnEmbed').addEventListener('click', function(e) {
-        e.preventDefault();
-        const url = "http://map.seculareducationassociation.org";
-        const code = `<iframe src="${url}" width="100%" height="600" style="border:none;"></iframe>`;
-        prompt("Copy and paste this code to embed the map on your site:", code);
-    });
-
-    document.getElementById('btnFocusSearch').addEventListener('click', function() {
-        document.getElementById('mapSearch').focus();
-    });
+    document.getElementById('btnFocusSearch').addEventListener('click', () => document.getElementById('mapSearch').focus());
 </script>
 </body>
 </html>
