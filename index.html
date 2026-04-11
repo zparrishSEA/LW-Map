@@ -439,6 +439,18 @@
         else { prompt("Copy this link to share the specific view:", deepLink); }
     };
 
+	window.shareSchool = function(distName, schoolName) {
+        const baseUrl = window.location.href.split('?')[0];
+        // Creates a link with both the district and school name parameters
+        const deepLink = `${baseUrl}?district=${encodeURIComponent(distName)}&school=${encodeURIComponent(schoolName)}`;
+
+        if (navigator.share) {
+            navigator.share({ title: 'LifeWise Map - ' + schoolName, url: deepLink }).catch(console.error);
+        } else {
+            prompt("Copy this link to share this specific school:", deepLink);
+        }
+    };
+
     window.updatePopup = function(distId, screenType, arg = null) {
         setTimeout(() => {
             if (window.currentActivePopup) {
@@ -662,6 +674,12 @@
             html += `<div class="app-row"><span class="app-label">Free/Reduced Lunch</span><span class="app-val">${school['School Free and Reduced Lunch Student Totals'] || 'N/A'}</span></div>`;
 
             html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'local_lifewise', ${schoolIdx})">Local LifeWise Info</button>`;
+
+            // Generate safe strings to prevent apostrophes from breaking the onclick function
+            const safeDistName = (dist.meta['Dist. Name'] || '').replace(/'/g, "\\'");
+            const safeSchoolName = (school['School Name'] || '').replace(/'/g, "\\'");
+
+            html += `<button onclick="shareSchool('${safeDistName}', '${safeSchoolName}')" class="popup-share-btn" style="margin-top: 10px;">Share School Info</button>`;
         }
 
         // ------------------------------------
