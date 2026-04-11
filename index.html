@@ -10,6 +10,17 @@
 
     <meta name="description" content="Secular Education Association LifeWise Academy Map. View program progress, signature counts, and district status across the USA.">
     <meta name="keywords" content="LifeWise, LifeWise map, district status, launch process, Secular Education Association, SEA, signature tracking, Christian Nationalism">
+	<meta property="og:type" content="website">
+    <meta property="og:url" content="http://map.seculareducationassociation.org/">
+    <meta property="og:title" content="LifeWise Program Map | Secular Education Association">
+    <meta property="og:description" content="View program progress, signature counts, and district status across the USA.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/zparrishSEA/LW-Map/refs/heads/main/map_preview.png">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="http://map.seculareducationassociation.org/">
+    <meta property="twitter:title" content="LifeWise Program Map | Secular Education Association">
+    <meta property="twitter:description" content="View program progress, signature counts, and district status across the USA.">
+    <meta property="twitter:image" content="https://raw.githubusercontent.com/zparrishSEA/LW-Map/refs/heads/main/map_preview.png">
 
     <style>
         body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; height: 100vh; overflow: hidden; width: 100vw; }
@@ -47,6 +58,26 @@
 .marker-count { color: #007bff; font-weight: bold; }
 .school-explainer { background: #e9ecef; border-left: 3px solid #007bff; padding: 8px; border-radius: 4px; margin-bottom: 12px; font-size: 10px; color: #444; line-height: 1.4; }
 .hidden-key { display: none !important; }
+/* --- Legend Minimize Toggle Styles --- */
+.legend-toggle {
+    background: #e9ecef;
+    border-bottom: 1px solid #ccc;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 11px;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+.legend-toggle:hover {
+    background: #dde0e3;
+}
+.custom-legend.minimized .legend-tabs,
+.custom-legend.minimized .legend-content {
+    display: none;
+}
 
 @media (max-width: 768px) {
     .custom-legend { width: 220px; }
@@ -127,6 +158,58 @@
             .company-logo { max-width: 100px; }
             .sidebar-intro p { font-size: 11px; }
         }
+
+		/* --- Sidebar Toggle Styles --- */
+#sidebar {
+    transition: margin-left 0.3s ease;
+}
+
+#sidebar.collapsed {
+    margin-left: -320px; /* Hides the sidebar by pulling it left */
+}
+
+#sidebarToggle {
+    position: absolute;
+    left: 320px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 50px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    z-index: 2005; /* Keeps it above the map tiles */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+    font-size: 14px;
+    color: #555;
+    transition: left 0.3s ease, background 0.2s;
+}
+
+#sidebarToggle:hover {
+    background: #f0f0f0;
+}
+
+/* Move the button flush to the edge when sidebar is collapsed */
+#sidebar.collapsed + #sidebarToggle {
+    left: 0 !important;
+}
+
+/* Adjust for landscape tablets where the sidebar width is 250px */
+@media (max-width: 950px) and (orientation: landscape) {
+    #sidebar.collapsed { margin-left: -250px !important; }
+    #sidebarToggle { left: 250px; }
+}
+
+/* Hide the slide toggle entirely on stacked mobile views */
+@media (max-width: 768px) {
+    #sidebarToggle { display: none; }
+    #sidebar.collapsed { margin-left: 0; }
+}
     </style>
 </head>
 <body>
@@ -178,6 +261,13 @@
     <ul id="resultsList"></ul>
 </div>
 
+</ul>
+</div>
+
+<div id="sidebarToggle" onclick="window.toggleSidebar()">
+    <span id="toggleArrow">&#10094;</span>
+</div>
+
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -192,6 +282,27 @@
     const markerGroup = L.featureGroup();
     const allSearchData = [];
     const districtsData = {};
+
+	// --- Sidebar Collapse Logic ---
+    window.toggleSidebar = function() {
+        const sidebar = document.getElementById('sidebar');
+        const arrow = document.getElementById('toggleArrow');
+
+        // Toggle the CSS class that slides it
+        sidebar.classList.toggle('collapsed');
+
+        // Swap the arrow direction
+        if (sidebar.classList.contains('collapsed')) {
+            arrow.innerHTML = '&#10095;'; // Right-facing arrow
+        } else {
+            arrow.innerHTML = '&#10094;'; // Left-facing arrow
+        }
+
+        // Tell Leaflet to recalculate the map size after the 0.3s sliding animation finishes
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 300);
+    };
 
 	let sheets = [
         { name: "Step 0", stepNum: 0, desc: "Under 10 Signatures", color: "#ABABAB" },
@@ -845,6 +956,10 @@
                     let totalCharters = Object.values(counts.charters).reduce((a, b) => a + b, 0);
 
                     let html = `
+                        <div class="legend-toggle" onclick="const p = this.parentElement; p.classList.toggle('minimized'); this.querySelector('.toggle-icon').innerText = p.classList.contains('minimized') ? '+' : '−';">
+                            <span style="font-weight: bold; text-transform: uppercase; font-size: 10px;">Map Legend</span>
+                            <span class="toggle-icon" style="font-size: 14px; font-weight: bold; line-height: 1;">−</span>
+                        </div>
                         <div class="legend-tabs">
                             <div class="legend-tab active" onclick="window.switchMapTab('districts', this)">Districts</div>
                             <div class="legend-tab" onclick="window.switchMapTab('schools', this)">Schools</div>
@@ -1047,6 +1162,19 @@
         if(markerGroup.getBounds().isValid()) map.fitBounds(markerGroup.getBounds(), {padding: [50, 50]});
     });
     document.getElementById('btnFocusSearch').addEventListener('click', () => document.getElementById('mapSearch').focus());
+	// --- Embed Button Logic ---
+    document.getElementById('btnEmbed').addEventListener('click', function(e) {
+        e.preventDefault(); // Prevents the page from jumping to the top
+
+        // Get the base URL without any search parameters
+        const baseUrl = window.location.href.split('?')[0];
+
+        // The iframe code to share
+        const embedCode = `<iframe src="${baseUrl}" width="100%" height="600" style="border:none;" allowfullscreen></iframe>`;
+
+        // Open a prompt for the user to copy the code
+        prompt("Copy this code to embed the map on your website:", embedCode);
+    });
 </script>
 </body>
 </html>
