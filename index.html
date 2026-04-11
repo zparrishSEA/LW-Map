@@ -574,8 +574,6 @@
 
             html += `<div class="app-row"><span class="app-label">Director Name</span><span class="app-val">${dist.meta['Director Name'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Director Email</span><span class="app-val">${dist.meta['Director Email'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Teachers Names</span><span class="app-val">${dist.meta['Teachers Names'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Teachers Emails</span><span class="app-val">${dist.meta['Teachers Emails'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Mailing Address</span><span class="app-val">${dist.meta['Mailing Address'] || 'N/A'}</span></div>`;
            // --- NEW: Churches and Sponsors (District Level) ---
             html += `<div class="app-row"><span class="app-label">Connected Churches</span><span class="app-val">${formatMixedText(dist.meta['Connected Churches'])}</span></div>`;
@@ -594,8 +592,6 @@
             html += `<div class="app-row"><span class="app-label">Grades Served</span><span class="app-val">${school['Grades Served'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Director Name</span><span class="app-val">${school['Director Name'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Director Email</span><span class="app-val">${school['Director Email'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Teachers Names</span><span class="app-val">${school['Teachers Names'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Teachers Emails</span><span class="app-val">${school['Teachers Emails'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Mailing Address</span><span class="app-val">${school['Mailing Address'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">LW URL</span><span class="app-val">${formatLink(school['LW URL'])}</span></div>`;
 
@@ -647,10 +643,39 @@
                             } catch (err) {}
                         });
 
-                        let popupHtml = `<div style="font-family:'Segoe UI', Tahoma, sans-serif; min-width:240px; max-height:400px; overflow-y:auto; padding-right:5px;">
-                            <h3 style="margin:0 0 10px 0; font-size:15px; border-bottom:2px solid #eee; padding-bottom:5px;">${feature.properties.name} Summary</h3>`;
-
                         let sData = window.stateMetaData ? window.stateMetaData[feature.properties.name] : null;
+
+                        // --- NEW: RTRI Law Badge Logic (Full Width) ---
+                        let badgeHtml = '';
+                        if (sData && sData['State RTRI Law Classification']) {
+                            let lawClass = sData['State RTRI Law Classification'];
+                            let rawLink = sData['More Information'] || '';
+                            let moreInfoLink = rawLink.trim() !== '' ? (rawLink.toLowerCase().startsWith('http') ? rawLink : 'https://' + rawLink) : '#';
+
+                            let badgeColor = '#A8A8A8'; // Default color for "No Law"
+                            let lowerLawClass = lawClass.toLowerCase();
+
+                            // Determine badge color based on text
+                            if (lowerLawClass.includes('shall')) {
+                                badgeColor = '#E03E36';
+                            } else if (lowerLawClass.includes('may')) {
+                                badgeColor = '#4A90D9';
+                            }
+
+                            // Build the badge as a full-width clickable anchor tag
+                            badgeHtml = `
+                            <a href="${moreInfoLink}" target="${moreInfoLink !== '#' ? '_blank' : '_self'}" style="display: block; width: 100%; box-sizing: border-box; background-color: ${badgeColor}; color: white; padding: 8px 10px; border-radius: 6px; text-decoration: none; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-bottom: 15px;">
+                                <div style="font-size: 13px; font-weight: bold; text-decoration: underline; margin-bottom: 4px; line-height: 1.2;">State RTRI Law Classification</div>
+                                <div style="font-size: 12px; font-weight: bold; margin-bottom: 4px; line-height: 1.2;">${lawClass}</div>
+                                <div style="font-size: 11px; font-style: italic; opacity: 0.9;">Click for more information</div>
+                            </a>`;
+                        }
+
+                        // --- UPDATED: Popup Header (Centered Title, Stacked Layout) ---
+                        let popupHtml = `<div style="font-family:'Segoe UI', Tahoma, sans-serif; min-width:300px; max-height:400px; overflow-y:auto; padding-right:5px;">
+                            <h3 style="margin: 0 0 12px 0; font-size: 16px; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 8px;">${feature.properties.name} Summary</h3>
+                            ${badgeHtml}`;
+
                         if (sData) {
                             popupHtml += `<table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:10px;">
                                 <tr><td style="padding:2px 0; color:#555;">State Education Agency Name:</td><td style="text-align:right;"><b>${sData['State Education Agency Name'] || 'N/A'}</b></td></tr>
