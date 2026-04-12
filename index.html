@@ -209,27 +209,34 @@
 @media (max-width: 768px) {
     #sidebar {
         transition: max-height 0.3s ease, padding 0.3s ease;
-        overflow: hidden;
+        overflow-y: auto; /* Restores scrolling when open! */
+        overflow-x: hidden;
     }
     #sidebar.collapsed {
         margin-left: 0 !important; /* Overrides desktop slide-left */
         max-height: 0 !important;  /* Slides it up */
         border-bottom: none;
         padding: 0;
+        overflow: hidden !important; /* Safely hides content only when closed */
     }
-    /* Move the toggle to the top center for mobile */
+
+    /* Move the toggle to the top right for mobile */
     #sidebarToggle {
         display: flex !important;
-        left: 50% !important;
+        position: fixed !important;
+        left: auto !important; /* Safely override the desktop setting */
+        right: 0 !important;   /* Pin to the right side */
         top: 0 !important;
-        transform: translateX(-50%) !important;
-        width: 60px;
-        height: 25px;
-        border-radius: 0 0 8px 8px; /* Tab pointing down */
+        transform: none !important;
+        width: 45px;
+        height: 40px;
+        border-radius: 0 0 0 8px; /* Tab rounded on bottom left */
         border: 1px solid #ccc;
         border-top: none;
+        border-right: none;
         background: rgba(255, 255, 255, 0.95);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        box-shadow: -2px 2px 5px rgba(0,0,0,0.2);
+        z-index: 4000 !important;
     }
 }
 
