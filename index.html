@@ -80,9 +80,25 @@
 }
 
 @media (max-width: 768px) {
-    .custom-legend { width: 220px; }
-    .legend-pane { max-height: 60vh; padding: 8px; }
-    .legend-tab { padding: 8px 2px; font-size: 10px; }
+    /* Shrink the overall box width and base font size */
+    .custom-legend { width: 190px; font-size: 10px; }
+
+    /* Shrink the header */
+    .legend-toggle { padding: 4px 8px; font-size: 10px; }
+
+    /* Tighter padding and ensure it can scroll if on a tiny phone */
+    .legend-pane { max-height: 65vh; padding: 6px; overflow-y: auto; }
+    .legend-tab { padding: 6px 2px; font-size: 10px; }
+
+    /* Make the rows tighter together */
+    .legend-row { margin-bottom: 4px; }
+
+    /* Slightly shrink the checkboxes */
+    .legend-row input[type="checkbox"] { margin: 0 4px 0 0; transform: scale(0.85); }
+
+    /* Shrink the colored dots and squares */
+    .legend-color-dot, .legend-color-square { width: 10px; height: 10px; }
+
     .legend-desc { display: none; }
 }
 
