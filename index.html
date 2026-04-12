@@ -461,37 +461,42 @@
         }, 10);
     };
 
-    window.snapToSchool = function(distId, sIdx) {
-        setTimeout(() => {
-            const target = allSearchData.find(m => m.distId === distId && m.schoolIdx === sIdx);
-            if (target && target.specificMarker) {
-                map.closePopup();
+    window.snapToSchool = async function(distId, sIdx) {
+        const target = allSearchData.find(m => m.distId === distId && m.schoolIdx === sIdx);
+        if (target && target.specificMarker) {
+            // Load state data first
+            let distState = districtsData[distId] ? districtsData[distId].state : null;
+            if(distState) await window.ensureStateDataLoaded(distState);
 
-                // --- NEW: Add the marker and tag it as a temporary 'ghost' ---
-                if (!map.hasLayer(target.specificMarker)) {
-                    target.specificMarker.addTo(map);
-                    target.specificMarker.isGhost = true;
-                }
-                // -------------------------------------------------------------
-
-                map.flyTo(target.specificMarker.getLatLng(), 15, { animate: true, duration: 0.5 });
-                setTimeout(() => target.specificMarker.openPopup(), 600);
+            map.closePopup();
+            if (!map.hasLayer(target.specificMarker)) {
+                target.specificMarker.addTo(map);
+                target.specificMarker.isGhost = true;
             }
-        }, 10);
+            map.flyTo(target.specificMarker.getLatLng(), 15, { animate: true, duration: 0.5 });
+            setTimeout(() => {
+                target.specificMarker.setPopupContent(renderPopupScreen(distId, 'school_details', sIdx));
+                target.specificMarker.openPopup();
+            }, 600);
+        }
     };
 
-    window.flyToDistrict = function(targetId) {
-        setTimeout(() => {
-            const target = allSearchData.find(m => m.distId === targetId && m.schoolIdx === null);
-            if (target && target.parentMarker) {
-                map.closePopup();
-                // ADD THIS LINE:
-                if (!map.hasLayer(target.parentMarker)) target.parentMarker.addTo(map);
+    window.flyToDistrict = async function(targetId) {
+        const target = allSearchData.find(m => m.distId === targetId && m.schoolIdx === null);
+        if (target && target.parentMarker) {
+            // Load state data first
+            let distState = districtsData[targetId] ? districtsData[targetId].state : null;
+            if(distState) await window.ensureStateDataLoaded(distState);
 
-                map.flyTo(target.parentMarker.getLatLng(), 13, { animate: true, duration: 0.5 });
-                setTimeout(() => target.parentMarker.openPopup(), 600);
-            }
-        }, 10);
+            map.closePopup();
+            if (!map.hasLayer(target.parentMarker)) target.parentMarker.addTo(map);
+
+            map.flyTo(target.parentMarker.getLatLng(), 13, { animate: true, duration: 0.5 });
+            setTimeout(() => {
+                target.parentMarker.setPopupContent(renderPopupScreen(targetId, 'main'));
+                target.parentMarker.openPopup();
+            }, 600);
+        }
     };
 
     window.renderPopupScreen = function(distKey, screenType, schoolIdx = null) {
@@ -707,7 +712,14 @@
            // --- NEW: Churches and Sponsors (District Level) ---
             html += `<div class="app-row"><span class="app-label">Connected Churches</span><span class="app-val">${formatMixedText(dist.meta['Connected Churches'])}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(dist.meta['Local Business Sponsors'])}</span></div>`;
-        }
+            // --- REPLACE THE CHANGES BLOCK WITH THIS ---
+            html += `<div style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;"><b style="font-size:11px; color:#555;">Program Status & Changes:</b></div>`;
+            html += `<div class="app-row"><span class="app-label">Current Launch Step</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${dist.phaseNum || '0'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Current Signatures</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${dist.signatures || '0'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Weekly Change</span><span class="app-val">${dist.meta['Weekly Change'] || 'None'}</span></div>`;
+            if (dist.meta['Sig. Change']) html += `<div class="app-row"><span class="app-label">Sig. Change</span><span class="app-val">${dist.meta['Sig. Change']}</span></div>`;
+            if (dist.meta['Step Change']) html += `<div class="app-row"><span class="app-label">Step Change</span><span class="app-val">${dist.meta['Step Change']}</span></div>`;
+		}
 
         // ------------------------------------
         // LOCAL LIFEWISE (FROM SCHOOL)
@@ -727,6 +739,13 @@
             // --- NEW: Churches and Sponsors (School Level) ---
             html += `<div class="app-row"><span class="app-label">Connected Churches</span><span class="app-val">${formatMixedText(school['Connected Churches'])}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(school['Local Business Sponsors'])}</span></div>`;
+            // --- REPLACE THE CHANGES BLOCK WITH THIS ---
+            html += `<div style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;"><b style="font-size:11px; color:#555;">Program Status & Changes:</b></div>`;
+            html += `<div class="app-row"><span class="app-label">Current Launch Step</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${school['Program Launch Step'] || '0'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Current Signatures</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${school['Signatures'] || '0'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Weekly Change</span><span class="app-val">${school['Weekly Change'] || 'None'}</span></div>`;
+            if (school['Sig. Change']) html += `<div class="app-row"><span class="app-label">Sig. Change</span><span class="app-val">${school['Sig. Change']}</span></div>`;
+            if (school['Step Change']) html += `<div class="app-row"><span class="app-label">Step Change</span><span class="app-val">${school['Step Change']}</span></div>`;
         }
 
         html += `</div>`;
@@ -844,9 +863,33 @@
             stateLayer.bringToBack();
         });
 
+// --- NEW: Dynamic State Loader ---
+    window.fullStateDataCache = {};
+    window.ensureStateDataLoaded = async function(stateName) {
+        if (!stateName || stateName === "Unknown") return;
+        const safeState = stateName.replace(/ /g, '_');
+        if (window.fullStateDataCache[safeState]) return; // Already loaded
+
+        try {
+            const res = await fetch(`./state_data/${safeState}.json?nocache=` + new Date().getTime());
+            const stateDistricts = await res.json();
+            // Inject the heavy data into our lightweight map memory
+            stateDistricts.forEach(d => {
+                if (districtsData[d.id]) {
+                    districtsData[d.id].meta = d.meta;
+                    districtsData[d.id].schools = d.schools;
+                }
+            });
+            window.fullStateDataCache[safeState] = true;
+        } catch (err) {
+            console.error("Failed to load state data for", stateName);
+        }
+    };
+
     async function loadMapData() {
         try {
-            const response = await fetch("./map_data.json?nocache=" + new Date().getTime());
+            // --- UPDATED: Fetch the lightweight index instead of the massive file ---
+            const response = await fetch("./master_index.json?nocache=" + new Date().getTime());
             const rawData = await response.json();
             const districtsArray = rawData.districts || [];
             window.stateMetaData = rawData.state_meta || {};
@@ -910,7 +953,12 @@
                     counts.districts[sheet.name]++; // New isolated count
                 }
 
-                distDot.bindPopup(() => { return renderPopupScreen(dist.id, 'main'); });
+                // --- UPDATED: Async Popup Loading ---
+                distDot.bindPopup("<div style='padding:10px;text-align:center;'><b>Loading local data...</b><br><small>Fetching state files</small></div>");
+                distDot.on('click', async function(e) {
+                    await window.ensureStateDataLoaded(dist.state);
+                    e.target.setPopupContent(renderPopupScreen(dist.id, 'main'));
+                });
                 distDot.distId = dist.id;
 
                 const displayName = dist.regionName ? `${dist.name} - ${dist.regionName}` : dist.name;
@@ -940,7 +988,12 @@
                             zIndexOffset: 15 // Explicitly layered above umbrella (5) but below Step 1 (30)
                         });
 
-                        schoolTriangle.bindPopup(() => { return renderPopupScreen(dist.id, 'school_details', sIdx); });
+                        // --- UPDATED: Async Popup Loading ---
+                        schoolTriangle.bindPopup("<div style='padding:10px;text-align:center;'><b>Loading local data...</b><br><small>Fetching state files</small></div>");
+                        schoolTriangle.on('click', async function(e) {
+                            await window.ensureStateDataLoaded(dist.state);
+                            e.target.setPopupContent(renderPopupScreen(dist.id, 'school_details', sIdx));
+                        });
 
                         // --- NEW: Only paint the marker on load if it has active grades ---
                         // (If it doesn't have grades, it stays hidden in memory until clicked)
