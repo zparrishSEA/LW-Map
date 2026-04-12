@@ -205,11 +205,47 @@
     #sidebarToggle { left: 250px; }
 }
 
-/* Hide the slide toggle entirely on stacked mobile views */
+/* Mobile Sidebar Collapse Logic */
 @media (max-width: 768px) {
-    #sidebarToggle { display: none; }
-    #sidebar.collapsed { margin-left: 0; }
+    #sidebar {
+        transition: max-height 0.3s ease, padding 0.3s ease;
+        overflow: hidden;
+    }
+    #sidebar.collapsed {
+        margin-left: 0 !important; /* Overrides desktop slide-left */
+        max-height: 0 !important;  /* Slides it up */
+        border-bottom: none;
+        padding: 0;
+    }
+    /* Move the toggle to the top center for mobile */
+    #sidebarToggle {
+        display: flex !important;
+        left: 50% !important;
+        top: 0 !important;
+        transform: translateX(-50%) !important;
+        width: 60px;
+        height: 25px;
+        border-radius: 0 0 8px 8px; /* Tab pointing down */
+        border: 1px solid #ccc;
+        border-top: none;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
 }
+
+/* --- Progress Marker Tooltip --- */
+        .progress-tooltip {
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1.5px solid #d32f2f;
+            border-radius: 4px;
+            color: #333;
+            font-size: 10px;
+            padding: 4px 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+        .progress-tooltip::before { border-top-color: #d32f2f; }
+
     </style>
 </head>
 <body>
@@ -287,22 +323,26 @@
     window.toggleSidebar = function() {
         const sidebar = document.getElementById('sidebar');
         const arrow = document.getElementById('toggleArrow');
+        const isMobile = window.innerWidth < 768;
 
         // Toggle the CSS class that slides it
         sidebar.classList.toggle('collapsed');
 
-        // Swap the arrow direction
-        if (sidebar.classList.contains('collapsed')) {
-            arrow.innerHTML = '&#10095;'; // Right-facing arrow
+        // Swap the arrow direction based on device
+        if (isMobile) {
+            arrow.innerHTML = sidebar.classList.contains('collapsed') ? '▼' : '▲';
         } else {
-            arrow.innerHTML = '&#10094;'; // Left-facing arrow
+            arrow.innerHTML = sidebar.classList.contains('collapsed') ? '❯' : '❮';
         }
 
         // Tell Leaflet to recalculate the map size after the 0.3s sliding animation finishes
-        setTimeout(() => {
-            map.invalidateSize();
-        }, 300);
+        setTimeout(() => { map.invalidateSize(); }, 300);
     };
+
+    // Ensure the arrow points the correct way when a mobile user first loads the page
+    if (window.innerWidth < 768) {
+        document.getElementById('toggleArrow').innerHTML = '▲';
+    }
 
 	let sheets = [
         { name: "Step 0", stepNum: 0, desc: "Under 10 Signatures", color: "#ABABAB" },
@@ -331,10 +371,23 @@
     const nonTradLayerGroup = L.layerGroup();
     const activeSchoolsLayerGroup = L.layerGroup();
 
+    // --- NEW: Weekly Progress Layer ---
+    const progressLayerGroup = L.layerGroup();
+    let totalProgressDistricts = 0;
+
     map.on('popupopen', function(e) {
         window.currentActivePopup = e.popup;
         const control = document.querySelector('.custom-legend');
         if (control) control.classList.add('hidden-key');
+
+        // --- NEW: AUTO-COLLAPSE SIDEBAR ON MOBILE ---
+        if (window.innerWidth < 768) {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar.classList.contains('collapsed')) {
+                window.toggleSidebar(); // Automatically slides it up!
+            }
+        }
+        // --------------------------------------------
 
         // --- REVEAL SCHOOLS WHEN DISTRICT CLICKED ---
         let srcMarker = e.popup._source;
@@ -969,6 +1022,31 @@
                     fullString: `${displayName} ${dist.meta['State']} ${dist.meta['Dist. Address']}`.toLowerCase()
                 });
 
+				// --- NEW: Generate Weekly Progress Markers ---
+                let wChange = dist.meta['Weekly Change'] || '';
+                if (wChange === 'Step' || wChange === 'Both') {
+                    let pDot;
+                    // Clone the exact marker style for the progress layer
+                    if (isNonTradOrCharter) {
+                        pDot = L.marker([dLat, dLon], { icon: getSquareIcon(sheet.color), zIndexOffset: zIndex + 100 });
+                    } else if (dist.type === 'umbrella') {
+                        const rainbowHtml = `<div style="display:block; box-sizing:border-box; width: 10px; height: 10px; border-radius: 50%; background: conic-gradient(#ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #8b00ff, #ff0000); border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.4);"></div>`;
+                        pDot = L.marker([dLat, dLon], { icon: L.divIcon({ className: '', html: rainbowHtml, iconSize: [11,11], iconAnchor: [5.5,5.5], popupAnchor: [0,-5.5] }), zIndexOffset: zIndex + 100 });
+                    } else {
+                        pDot = L.circleMarker([dLat, dLon], { radius: 4, fillColor: sheet.color, color: "#fff", weight: 1.5, fillOpacity: 0.9, zIndexOffset: zIndex + 100 });
+                    }
+
+                    // Add the popup and lazy-load logic
+                    pDot.bindPopup("<div style='padding:10px;text-align:center;'><b>Loading local data...</b><br><small>Fetching state files</small></div>");
+                    pDot.on('click', async function(e) {
+                        await window.ensureStateDataLoaded(dist.state);
+                        e.target.setPopupContent(renderPopupScreen(dist.id, 'main'));
+                    });
+
+                    pDot.addTo(progressLayerGroup);
+                    totalProgressDistricts++;
+                }
+
                 dist.schools.forEach((school, sIdx) => {
                     const sLat = parseFloat(school['School LAT']);
                     const sLon = parseFloat(school['School LON']);
@@ -1049,15 +1127,24 @@
                         </div>`;
                     });
 
-                    // Add the Charter/Non-Traditional Checkbox (Unchecked by default)
+                    // Add the Charter/Non-Traditional Checkbox
                     html += `
                         <div class="legend-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc;">
                             <input type="checkbox" id="charterToggle" onchange="window.toggleCharterLayer(this.checked)">
                             <div class="legend-icon-container"><div class="legend-color-square" style="background-color:#555"></div></div>
                             <div style="flex:1;"><b style="color:#000; font-family: 'Segoe UI', Tahoma, sans-serif;">Charter/Non-Trad Districts</b> <span class="marker-count">(${totalCharters})</span>
                             <span class="legend-desc">Includes all charter and non-traditional districts regardless of step.</span></div>
+                        </div>`;
+
+                    // --- Progress Toggle Checkbox ---
+                    html += `
+                        <div class="legend-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc;">
+                            <input type="checkbox" id="progressToggle" onchange="window.toggleProgressLayer(this.checked)">
+                            <div class="legend-icon-container"><div class="legend-color-dot" style="background-color:#fff; border: 2px solid #d32f2f;"></div></div>
+                            <div style="flex:1;"><b style="color:#000; font-family: 'Segoe UI', Tahoma, sans-serif;">Show Weekly Progress</b> <span class="marker-count">(${totalProgressDistricts})</span>
+                            <span class="legend-desc">Shows only districts that advanced or regressed a step this week.</span></div>
                         </div>
-                    </div>`;
+                    </div>`; // <-- The closing div is now safely at the very end!
 
                     // 2. Build Schools Pane
                     html += `<div class="legend-pane" id="pane-schools">
@@ -1122,11 +1209,18 @@
                     if (isVisible) {
                         map.addLayer(sheet.layerGroup);
 
-                        // NEW: If a regular step is turned on, turn off the Charter layer
+                        // If a regular step is turned on, turn off the Charter layer
                         const charterToggle = document.getElementById('charterToggle');
                         if (charterToggle && charterToggle.checked) {
                             charterToggle.checked = false;
                             map.removeLayer(nonTradLayerGroup);
+                        }
+
+                        // NEW: If a regular step is turned on, turn off the Progress layer
+                        const progressToggle = document.getElementById('progressToggle');
+                        if (progressToggle && progressToggle.checked) {
+                            progressToggle.checked = false;
+                            map.removeLayer(progressLayerGroup);
                         }
                     } else {
                         map.removeLayer(sheet.layerGroup);
@@ -1139,20 +1233,52 @@
                 if (isVisible) {
                     map.addLayer(nonTradLayerGroup);
 
-                    // NEW: Hide all regular steps and uncheck their boxes in the legend
+                    // Hide all regular steps and uncheck their boxes in the legend
                     sheets.forEach(s => {
                         map.removeLayer(s.layerGroup);
                         const checkbox = document.querySelector(`input[onchange="window.toggleStepLayer('${s.name}', this.checked)"]`);
                         if (checkbox) checkbox.checked = false;
                     });
+
+                    // NEW: If the Charter layer is turned on, turn off the Progress layer
+                    const progressToggle = document.getElementById('progressToggle');
+                    if (progressToggle && progressToggle.checked) {
+                        progressToggle.checked = false;
+                        map.removeLayer(progressLayerGroup);
+                    }
                 } else {
                     map.removeLayer(nonTradLayerGroup);
 
-                    // NEW: Restore all regular steps and re-check their boxes when Charter is turned off
+                    // Restore all regular steps and re-check their boxes when Charter is turned off
                     sheets.forEach(s => {
                         map.addLayer(s.layerGroup);
                         const checkbox = document.querySelector(`input[onchange="window.toggleStepLayer('${s.name}', this.checked)"]`);
                         if (checkbox) checkbox.checked = true;
+                    });
+                }
+            };
+
+            // --- Progress Toggle Logic ---
+            window.toggleProgressLayer = function(isVisible) {
+                if (isVisible) {
+                    map.addLayer(progressLayerGroup);
+                    // Hide regular layers
+                    sheets.forEach(s => {
+                        map.removeLayer(s.layerGroup);
+                        const cb = document.querySelector(`input[onchange="window.toggleStepLayer('${s.name}', this.checked)"]`);
+                        if (cb) cb.checked = false;
+                    });
+                    // Hide charter layer
+                    map.removeLayer(nonTradLayerGroup);
+                    const charterCb = document.getElementById('charterToggle');
+                    if (charterCb) charterCb.checked = false;
+                } else {
+                    map.removeLayer(progressLayerGroup);
+                    // Restore regular layers
+                    sheets.forEach(s => {
+                        map.addLayer(s.layerGroup);
+                        const cb = document.querySelector(`input[onchange="window.toggleStepLayer('${s.name}', this.checked)"]`);
+                        if (cb) cb.checked = true;
                     });
                 }
             };
