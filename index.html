@@ -147,7 +147,7 @@
 
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            #sidebar { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid #ccc; z-index: 3000; }
+            #sidebar { width: 100%; height: 100vh; max-height: 100vh; border-right: none; border-bottom: 1px solid #ccc; z-index: 3000; }
             #map { width: 100%; flex-grow: 1; }
             .layer-desc { display: none; }
         }
@@ -281,7 +281,9 @@
             <span class="weekly-update-text">This map is updated once a week</span>
 
             <div class="share-container">
-                <a href="https://www.facebook.com/sharer/sharer.php?u=http://map.seculareducationassociation.org/" target="_blank" class="share-btn fb">Facebook</a>
+                <div style="width: 100%; text-align: center; font-weight: bold; color: #d32f2f; font-size: 13px; margin-bottom: 5px;">Sound the alarm, share the map</div>
+
+				<a href="https://www.facebook.com/sharer/sharer.php?u=http://map.seculareducationassociation.org/" target="_blank" class="share-btn fb">Facebook</a>
                 <a href="https://twitter.com/intent/tweet?url=http://map.seculareducationassociation.org/" target="_blank" class="share-btn tw">X</a>
                 <a href="https://www.reddit.com/submit?url=http://map.seculareducationassociation.org/&title=LifeWise%20Program%20Map" target="_blank" class="share-btn rd">Reddit</a>
                 <a href="https://www.threads.net/intent/post?text=http://map.seculareducationassociation.org/" target="_blank" class="share-btn th">Threads</a>
@@ -295,10 +297,10 @@
     </div>
 
     <div class="sidebar-header">
-        <input type="text" id="mapSearch" class="search-box" placeholder="Start typing a district or school...">
+        <input type="text" id="mapSearch" class="search-box" placeholder="Start typing a district or school, or click View Map to explore...">
         <div class="btn-group">
             <button id="btnSearch" style="background:#89ebfa; color:#333;">Search</button>
-            <button id="btnReset" style="background:#6c757d;">Reset View</button>
+            <button id="btnReset" style="background:#6c757d;">View Map</button>
         </div>
     </div>
     <ul id="resultsList"></ul>
@@ -1362,8 +1364,15 @@
 
     document.getElementById('btnSearch').addEventListener('click', () => { searchInput.dispatchEvent(new Event('input')); });
     document.getElementById('btnReset').addEventListener('click', () => {
-        searchInput.value = ""; resultsList.innerHTML = "";
-        if(markerGroup.getBounds().isValid()) map.fitBounds(markerGroup.getBounds(), {padding: [50, 50]});
+        const sidebar = document.getElementById('sidebar');
+        // Check if the sidebar is currently open
+        if (!sidebar.classList.contains('collapsed')) {
+            window.toggleSidebar(); // Hides the sidebar
+        }
+
+        // Clear the search inputs to keep things tidy
+        searchInput.value = "";
+        resultsList.innerHTML = "";
     });
     document.getElementById('btnFocusSearch').addEventListener('click', () => document.getElementById('mapSearch').focus());
 	// --- Embed Button Logic ---
