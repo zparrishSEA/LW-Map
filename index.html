@@ -146,9 +146,19 @@
         .school-triangle-icon { background: none; border: none; }
 
         @media (max-width: 768px) {
-            body { flex-direction: column; }
-            #sidebar { width: 100%; height: 100vh; max-height: 100vh; border-right: none; border-bottom: 1px solid #ccc; z-index: 3000; }
-            #map { width: 100%; flex-grow: 1; }
+            #sidebar {
+                position: absolute; /* This makes it float over the map */
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                max-height: 100%;
+                border-right: none;
+                border-bottom: 1px solid #ccc;
+                z-index: 3000;
+                background: #fff;
+            }
+            #map { width: 100%; height: 100%; }
             .layer-desc { display: none; }
         }
 
@@ -297,7 +307,7 @@
     </div>
 
     <div class="sidebar-header">
-        <input type="text" id="mapSearch" class="search-box" placeholder="Start typing a district or school, or click View Map to explore...">
+        <input type="text" id="mapSearch" class="search-box" placeholder="Type a district/school, or View Map to explore">
         <div class="btn-group">
             <button id="btnSearch" style="background:#89ebfa; color:#333;">Search</button>
             <button id="btnReset" style="background:#6c757d;">View Map</button>
