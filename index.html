@@ -81,7 +81,7 @@
 
 @media (max-width: 768px) {
     .custom-legend { width: 220px; }
-    .legend-pane { max-height: 200px; padding: 8px; }
+    .legend-pane { max-height: 60vh; padding: 8px; }
     .legend-tab { padding: 8px 2px; font-size: 10px; }
     .legend-desc { display: none; }
 }
@@ -231,18 +231,18 @@
     }
 
     /* Move the toggle to the top right for mobile */
-    #sidebarToggle {
+    #sidebarToggle,
+    #sidebar.collapsed + #sidebarToggle {
         display: flex !important;
         position: fixed !important;
-        left: auto !important; /* Safely override the desktop setting */
-        right: 0 !important;   /* Pin to the right side */
-        top: 0 !important;
+        left: auto !important;
+        right: 0 !important;
+        top: 10px !important; /* Give it a little breathing room from the top edge */
         transform: none !important;
         width: 45px;
         height: 40px;
-        border-radius: 0 0 0 8px; /* Tab rounded on bottom left */
+        border-radius: 8px 0 0 8px; /* Rounded corners on the left side */
         border: 1px solid #ccc;
-        border-top: none;
         border-right: none;
         background: rgba(255, 255, 255, 0.95);
         box-shadow: -2px 2px 5px rgba(0,0,0,0.2);
@@ -1114,7 +1114,7 @@
 
             // Build Custom Tabbed Legend Control
             const LegendControl = L.Control.extend({
-                options: { position: window.innerWidth < 950 ? 'topright' : 'bottomright' },
+                options: { position: 'bottomright' },
                 onAdd: function () {
                     const div = L.DomUtil.create('div', 'custom-legend');
                     L.DomEvent.disableClickPropagation(div);
