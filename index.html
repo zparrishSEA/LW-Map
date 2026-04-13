@@ -360,7 +360,7 @@
 
     // Define separate starting coordinates for Mobile vs Desktop
     // Format is [Latitude (Up/Down), Longitude (Left/Right)]
-    const startingCoords = isMobile ? [10.0, -90.0] : [38.0, -85.0];
+    const startingCoords = isMobile ? [5.0, -80.0] : [38.0, -85.0];
     const startingZoom = isMobile ? 3 : 4;
 
     const map = L.map('map', { preferCanvas: true }).setView(startingCoords, startingZoom);
