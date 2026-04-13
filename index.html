@@ -357,7 +357,13 @@
 
 <script>
     const isMobile = window.innerWidth < 768;
-    const map = L.map('map', { preferCanvas: true }).setView([38.0, -85.0], isMobile ? 3 : 4);
+
+    // Define separate starting coordinates for Mobile vs Desktop
+    // Format is [Latitude (Up/Down), Longitude (Left/Right)]
+    const startingCoords = isMobile ? [25.0, -90.0] : [38.0, -85.0];
+    const startingZoom = isMobile ? 3 : 4;
+
+    const map = L.map('map', { preferCanvas: true }).setView(startingCoords, startingZoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
     const markerGroup = L.featureGroup();
@@ -1187,7 +1193,7 @@
                             <input type="checkbox" id="progressToggle" onchange="window.toggleProgressLayer(this.checked)">
                             <div class="legend-icon-container"><div class="legend-color-dot" style="background-color:#fff; border: 2px solid #d32f2f;"></div></div>
                             <div style="flex:1;"><b style="color:#000; font-family: 'Segoe UI', Tahoma, sans-serif;">Show Weekly Progress</b> <span class="marker-count">(${totalProgressDistricts})</span>
-                            <span class="legend-desc">Shows only districts that advanced or regressed a step this week.</span></div>
+                            <span class="legend-desc">Shows only districts that advanced launch steps in the past week. Select a marker to see advancement </span></div>
                         </div>
                     </div>`; // <-- The closing div is now safely at the very end!
 
