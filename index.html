@@ -80,18 +80,18 @@
 }
 
 @media (max-width: 768px) {
-    /* Shrink the overall box width further and push it up from the bottom edge */
+    /* Force Leaflet to lift the box off the bottom edge */
     .custom-legend {
         width: 170px;
         font-size: 9px;
-        margin-bottom: 25px; /* This adds the cushion at the bottom */
+        margin-bottom: 50px !important;
     }
 
     /* Shrink the header */
     .legend-toggle { padding: 3px 6px; font-size: 9px; }
 
-    /* Tighter padding and slightly shorter max-height */
-    .legend-pane { max-height: 55vh; padding: 4px; overflow-y: auto; }
+    /* Add extra padding at the bottom of the pane so the last item breathes */
+    .legend-pane { max-height: 55vh; padding: 4px 4px 10px 4px; overflow-y: auto; }
     .legend-tab { padding: 4px 2px; font-size: 9px; }
 
     /* Make the rows tighter together */
