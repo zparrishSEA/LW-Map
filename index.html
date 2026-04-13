@@ -657,6 +657,20 @@
                 let topHeader = dist.phaseNum >= 10
                     ? `LifeWise is Live<br><span style="font-size:11px; color:#555; font-weight:normal;">Schools with LifeWise: ${lwSchoolsCount}</span>`
                     : `LifeWise Launch Step: ${dist.phaseNum}<br><span style="font-size:11px; color:#555; font-weight:normal;">Interest List Signatures: ${dist.signatures || '0'}</span>`;
+
+                // --- NEW: Weekly Status Change Logic ---
+                let sigChange = dist.meta['Sig. Change'];
+                let stepChange = dist.meta['Step Change'];
+
+                if (sigChange || stepChange) {
+                    topHeader += `<br><span style="font-size:11px; color:#d32f2f; font-weight:bold; display:block; margin-top:4px;">Weekly Status Change:</span>`;
+                    topHeader += `<span style="font-size:10px; color:#555; font-weight:normal;">`;
+                    let changes = [];
+                    if (stepChange) changes.push(`Step: ${stepChange}`);
+                    if (sigChange) changes.push(`Signatures: ${sigChange}`);
+                    topHeader += changes.join(' | ') + `</span>`;
+                }
+
                 html += `<div class="popup-header-red">${topHeader}</div>`;
             }
 
@@ -1431,6 +1445,46 @@
         // Open a prompt for the user to copy the code
         prompt("Copy this code to embed the map on your website:", embedCode);
     });
+
+	// --- NEW: Dynamic Marker Resizing ---
+    function adjustMarkerSizes() {
+        const currentZoom = map.getZoom();
+
+        // Determine the new size based on how far we are zoomed in
+        // Default radius is 4. It gets progressively bigger as you zoom.
+        let newRadius = 4;
+        if (currentZoom >= 12) {
+            newRadius = 10; // Huge dots for city/street level
+        } else if (currentZoom >= 9) {
+            newRadius = 8;  // Large dots for county level
+        } else if (currentZoom >= 6) {
+            newRadius = 6;  // Medium dots for state level
+        }
+
+        // 1. Update all standard District dots
+        sheets.forEach(sheet => {
+            if (sheet.layerGroup) {
+                sheet.layerGroup.eachLayer(layer => {
+                    // Check if it's a standard dot (L.circleMarker)
+                    if (typeof layer.setRadius === 'function') {
+                        layer.setRadius(newRadius);
+                    }
+                });
+            }
+        });
+
+        // 2. Update all Weekly Progress dots
+        if (typeof progressLayerGroup !== 'undefined') {
+            progressLayerGroup.eachLayer(layer => {
+                if (typeof layer.setRadius === 'function') {
+                    layer.setRadius(newRadius);
+                }
+            });
+        }
+    }
+
+    // Listen for the map zooming and run the size adjustment
+    map.on('zoomend', adjustMarkerSizes);
 </script>
 </body>
 </html>
