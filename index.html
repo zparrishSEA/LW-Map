@@ -1005,7 +1005,7 @@
         }
     };
 
-    async function loadMapData() {
+   async function loadMapData() {
         try {
             // --- UPDATED: Fetch the lightweight index instead of the massive file ---
             const response = await fetch("./master_index.json?nocache=" + new Date().getTime());
@@ -1013,6 +1013,9 @@
             const districtsArray = rawData.districts || [];
             window.stateMetaData = rawData.state_meta || {};
             window.districtsByCode = {};
+
+            // --- UPDATED: Initialize an object to hold separate layers for each school step ---
+            window.schoolLayerGroups = {};
 
             districtsArray.forEach(dist => {
                 districtsData[dist.id] = dist;
@@ -1088,7 +1091,7 @@
                     fullString: `${displayName} ${dist.meta['State']} ${dist.meta['Dist. Address']}`.toLowerCase()
                 });
 
-				// --- NEW: Generate Weekly Progress Markers ---
+                // --- NEW: Generate Weekly Progress Markers ---
                 let wChange = dist.meta['Weekly Change'] || '';
                 if (wChange === 'Step' || wChange === 'Both') {
                     let pDot;
@@ -1139,11 +1142,15 @@
                             e.target.setPopupContent(renderPopupScreen(dist.id, 'school_details', sIdx));
                         });
 
-                        // --- NEW: Only paint the marker on load if it has active grades ---
-                        // (If it doesn't have grades, it stays hidden in memory until clicked)
-                        // --- NEW: Add active schools to the master legend toggle ---
+                        // --- UPDATED: Sort active schools into distinct layer groups by step ---
                         if (hasGrades) {
-                            schoolTriangle.addTo(activeSchoolsLayerGroup);
+                            // Ensure the layer group exists for this step
+                            if (!window.schoolLayerGroups[schoolSheet.name]) {
+                                window.schoolLayerGroups[schoolSheet.name] = L.layerGroup();
+                            }
+
+                            // Add the school marker to its specific step's layer
+                            schoolTriangle.addTo(window.schoolLayerGroups[schoolSheet.name]);
                             counts.schools[schoolSheet.name]++; // Record school totals
                         }
 
@@ -1171,9 +1178,9 @@
                     let totalCharters = Object.values(counts.charters).reduce((a, b) => a + b, 0);
 
                     let html = `
-                        <div class="legend-toggle" onclick="const p = this.parentElement; p.classList.toggle('minimized'); this.querySelector('.toggle-icon').innerText = p.classList.contains('minimized') ? '+' : '−';">
+                        <div class="legend-toggle" onclick="const p = this.parentElement; p.classList.toggle('minimized'); this.querySelector('.toggle-icon').innerText = p.classList.contains('minimized') ? '+' : '-';">
                             <span style="font-weight: bold; text-transform: uppercase; font-size: 10px;">Map Legend</span>
-                            <span class="toggle-icon" style="font-size: 14px; font-weight: bold; line-height: 1;">−</span>
+                            <span class="toggle-icon" style="font-size: 14px; font-weight: bold; line-height: 1;">-</span>
                         </div>
                         <div class="legend-tabs">
                             <div class="legend-tab active" onclick="window.switchMapTab('districts', this)">Districts</div>
@@ -1216,10 +1223,12 @@
                     html += `<div class="legend-pane" id="pane-schools">
                                 <div class="school-explainer">Only schools with confirmed operational programs are shown. Tracking is done at the district level until there is a live program.</div>`;
 
+                    // --- UPDATED: Added Checkboxes to the Schools Pane ---
                     sheets.forEach(s => {
                         if(counts.schools[s.name] > 0) {
                             html += `
                             <div class="legend-row">
+                                <input type="checkbox" checked onchange="window.toggleSchoolLayer('${s.name}', this.checked)">
                                 <div class="legend-icon-container">
                                     <svg width="14" height="14" viewBox="0 0 16 16"><polygon points="8,1 15,14 1,14" fill="${s.color}" stroke="#fff" stroke-width="1.5"/></svg>
                                 </div>
@@ -1259,12 +1268,31 @@
                     if (charterToggle && charterToggle.checked) map.addLayer(nonTradLayerGroup);
                     else map.removeLayer(nonTradLayerGroup);
 
-                    map.removeLayer(activeSchoolsLayerGroup);
+                    // --- UPDATED: Hide all distinct school layers ---
+                    Object.values(window.schoolLayerGroups).forEach(layer => map.removeLayer(layer));
+
                 } else if (tab === 'schools') {
-                    // Hide all district and charter layers, show active schools
+                    // Hide all district and charter layers
                     sheets.forEach(s => map.removeLayer(s.layerGroup));
                     map.removeLayer(nonTradLayerGroup);
-                    map.addLayer(activeSchoolsLayerGroup);
+
+                    // Hide progress layer if active
+                    const progressToggle = document.getElementById('progressToggle');
+                    if (progressToggle && progressToggle.checked) {
+                        progressToggle.checked = false;
+                        map.removeLayer(progressLayerGroup);
+                    }
+
+                    // --- UPDATED: Show active school layers based on their specific checkboxes ---
+                    sheets.forEach(s => {
+                        if (window.schoolLayerGroups[s.name]) {
+                            const checkbox = document.querySelector(`input[onchange="window.toggleSchoolLayer('${s.name}', this.checked)"]`);
+                            // If the checkbox exists and is checked, or if we haven't rendered a checkbox (failsafe), show it.
+                            if (!checkbox || checkbox.checked) {
+                                map.addLayer(window.schoolLayerGroups[s.name]);
+                            }
+                        }
+                    });
                 }
             };
 
@@ -1290,6 +1318,17 @@
                         }
                     } else {
                         map.removeLayer(sheet.layerGroup);
+                    }
+                }
+            };
+
+            // --- NEW: Toggle logic for Schools ---
+            window.toggleSchoolLayer = function(stepName, isVisible) {
+                if (window.schoolLayerGroups && window.schoolLayerGroups[stepName]) {
+                    if (isVisible) {
+                        map.addLayer(window.schoolLayerGroups[stepName]);
+                    } else {
+                        map.removeLayer(window.schoolLayerGroups[stepName]);
                     }
                 }
             };
