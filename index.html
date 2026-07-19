@@ -343,9 +343,6 @@
     <ul id="resultsList"></ul>
 </div>
 
-</ul>
-</div>
-
 <div id="sidebarToggle" onclick="window.toggleSidebar()">
     <span id="toggleArrow">&#10094;</span>
 </div>
@@ -382,9 +379,9 @@
 
         // Swap the arrow direction based on device
         if (isMobile) {
-            arrow.innerHTML = sidebar.classList.contains('collapsed') ? '▼' : '▲';
+            arrow.innerHTML = sidebar.classList.contains('collapsed') ? '?' : '?';
         } else {
-            arrow.innerHTML = sidebar.classList.contains('collapsed') ? '❯' : '❮';
+            arrow.innerHTML = sidebar.classList.contains('collapsed') ? '?' : '?';
         }
 
         // Tell Leaflet to recalculate the map size after the 0.3s sliding animation finishes
@@ -393,7 +390,7 @@
 
     // Ensure the arrow points the correct way when a mobile user first loads the page
     if (window.innerWidth < 768) {
-        document.getElementById('toggleArrow').innerHTML = '▲';
+        document.getElementById('toggleArrow').innerHTML = '?';
     }
 
 	let sheets = [
@@ -566,7 +563,8 @@
         }, 10);
     };
 
-    window.snapToSchool = async function(distId, sIdx) {
+    // --- UPDATED: Accepts custom screen routing for deep context snapping ---
+    window.snapToSchool = async function(distId, sIdx, screenType = 'school_details') {
         const target = allSearchData.find(m => m.distId === distId && m.schoolIdx === sIdx);
         if (target && target.specificMarker) {
             // Load state data first
@@ -580,13 +578,14 @@
             }
             map.flyTo(target.specificMarker.getLatLng(), 15, { animate: true, duration: 0.5 });
             setTimeout(() => {
-                target.specificMarker.setPopupContent(renderPopupScreen(distId, 'school_details', sIdx));
+                target.specificMarker.setPopupContent(renderPopupScreen(distId, screenType, sIdx));
                 target.specificMarker.openPopup();
             }, 600);
         }
     };
 
-    window.flyToDistrict = async function(targetId) {
+    // --- UPDATED: Accepts custom screen routing for deep context snapping ---
+    window.flyToDistrict = async function(targetId, screenType = 'main') {
         const target = allSearchData.find(m => m.distId === targetId && m.schoolIdx === null);
         if (target && target.parentMarker) {
             // Load state data first
@@ -598,7 +597,7 @@
 
             map.flyTo(target.parentMarker.getLatLng(), 13, { animate: true, duration: 0.5 });
             setTimeout(() => {
-                target.parentMarker.setPopupContent(renderPopupScreen(targetId, 'main'));
+                target.parentMarker.setPopupContent(renderPopupScreen(targetId, screenType));
                 target.parentMarker.openPopup();
             }, 600);
         }
@@ -828,9 +827,12 @@
             html += `<div class="app-row"><span class="app-label">Director Name</span><span class="app-val">${dist.meta['Director Name'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Director Email</span><span class="app-val">${dist.meta['Director Email'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Mailing Address</span><span class="app-val">${dist.meta['Mailing Address'] || 'N/A'}</span></div>`;
-           // --- NEW: Churches and Sponsors (District Level) ---
-            html += `<div class="app-row"><span class="app-label">Connected Churches</span><span class="app-val">${formatMixedText(dist.meta['Connected Churches'])}</span></div>`;
+
+            // --- UPDATED: Churches and Sponsors (District Level) ---
+            html += `<div class="app-row"><span class="app-label">Hosting Locations & Sponsoring Churches</span><span class="app-val">${formatMixedText(dist.meta['LW Hosting Locations'])}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(dist.meta['Local Business Sponsors'])}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">LW Employees</span><span class="app-val">${formatMixedText(dist.meta['LW Employees'])}</span></div>`;
+
             // --- REPLACE THE CHANGES BLOCK WITH THIS ---
             html += `<div style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;"><b style="font-size:11px; color:#555;">Program Status & Changes:</b></div>`;
             html += `<div class="app-row"><span class="app-label">Current Launch Step</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${dist.phaseNum || '0'}</span></div>`;
@@ -855,9 +857,11 @@
             html += `<div class="app-row"><span class="app-label">Mailing Address</span><span class="app-val">${school['Mailing Address'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">LW URL</span><span class="app-val">${formatLink(school['LW URL'])}</span></div>`;
 
-            // --- NEW: Churches and Sponsors (School Level) ---
-            html += `<div class="app-row"><span class="app-label">Connected Churches</span><span class="app-val">${formatMixedText(school['Connected Churches'])}</span></div>`;
+            // --- UPDATED: Churches and Sponsors (School Level) ---
+            html += `<div class="app-row"><span class="app-label">Hosting Locations</span><span class="app-val">${formatMixedText(school['LW Hosting Locations'])}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(school['Local Business Sponsors'])}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">LW Employees</span><span class="app-val">${formatMixedText(school['LW Employees'])}</span></div>`;
+
             // --- REPLACE THE CHANGES BLOCK WITH THIS ---
             html += `<div style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;"><b style="font-size:11px; color:#555;">Program Status & Changes:</b></div>`;
             html += `<div class="app-row"><span class="app-label">Current Launch Step</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${school['Program Launch Step'] || '0'}</span></div>`;
@@ -1085,10 +1089,14 @@
 
                 const displayName = dist.regionName ? `${dist.name} - ${dist.regionName}` : dist.name;
 
+                // --- UPDATED: Add new fields to Search String ---
+                const safeHosting = (dist.meta['LW Hosting Locations'] || '').toLowerCase();
+                const safeEmp = (dist.meta['LW Employees'] || '').toLowerCase();
+
                 allSearchData.push({
                     distId: dist.id, schoolIdx: null, specificMarker: distDot, parentMarker: distDot,
                     layerName: sheet.name, name: displayName, type: dist.type,
-                    fullString: `${displayName} ${dist.meta['State']} ${dist.meta['Dist. Address']}`.toLowerCase()
+                    fullString: `${displayName} ${dist.meta['State']} ${dist.meta['Dist. Address']} ${safeHosting} ${safeEmp}`.toLowerCase()
                 });
 
                 // --- NEW: Generate Weekly Progress Markers ---
@@ -1154,13 +1162,15 @@
                             counts.schools[schoolSheet.name]++; // Record school totals
                         }
 
-                        // --- EXACT NAME MAP FIX ---
-                        // Search bar correctly catalogs exact School column names
+                        // --- UPDATED: EXACT NAME MAP FIX & ADDED SEARCH FIELDS ---
+                        const sSafeHosting = (school['LW Hosting Locations'] || '').toLowerCase();
+                        const sSafeEmp = (school['LW Employees'] || '').toLowerCase();
+
                         allSearchData.push({
                             distId: dist.id, schoolIdx: sIdx, specificMarker: schoolTriangle,
                             parentMarker: distDot, layerName: schoolSheet.name, name: school['School Name'], type: 'school',
-                            fullString: `${school['School Name']} ${displayName}`.toLowerCase(),
-                            hasGrades: hasGrades // <-- ADD THIS LINE BACK!
+                            fullString: `${school['School Name']} ${displayName} ${sSafeHosting} ${sSafeEmp}`.toLowerCase(),
+                            hasGrades: hasGrades
                         });
                     }
                 });
@@ -1418,6 +1428,20 @@
     const resultsList = document.getElementById('resultsList');
     let searchTimeout = null;
 
+    // --- NEW: Helper function to isolate the matching name/church inside a comma-separated list ---
+    function getMatchingToken(text, query) {
+        if (!text) return null;
+        const parts = text.split(',');
+        for (let i = 0; i < parts.length; i++) {
+            if (parts[i].toLowerCase().includes(query)) {
+                return parts[i].trim();
+            }
+        }
+        if (text.toLowerCase().includes(query)) return text.trim();
+        return null;
+    }
+
+    // --- UPDATED: Enhanced contextual search processor ---
     searchInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
@@ -1430,28 +1454,59 @@
 
             for (let i = 0; i < allSearchData.length; i++) {
                 if (allSearchData[i].fullString.includes(query)) {
-                    if (seenNames.has(allSearchData[i].name)) continue;
-                    seenNames.add(allSearchData[i].name);
-                    matches.push(allSearchData[i]);
+                    const dist = districtsData[allSearchData[i].distId];
+                    let matchedContext = null;
+                    let targetScreen = allSearchData[i].type === 'school' ? 'school_details' : 'main';
+
+                    // Evaluate matching subfields to decide if we should deep-route the user to LifeWise info tabs
+                    if (allSearchData[i].type === 'school') {
+                        const school = dist.schools[allSearchData[i].schoolIdx];
+                        const empMatch = getMatchingToken(school['LW Employees'], query);
+                        const churchMatch = getMatchingToken(school['LW Hosting Locations'], query);
+                        if (empMatch) { matchedContext = empMatch; targetScreen = 'local_lifewise'; }
+                        else if (churchMatch) { matchedContext = churchMatch; targetScreen = 'local_lifewise'; }
+                    } else {
+                        const empMatch = getMatchingToken(dist.meta['LW Employees'], query);
+                        const churchMatch = getMatchingToken(dist.meta['LW Hosting Locations'], query);
+                        if (empMatch) { matchedContext = empMatch; targetScreen = 'district_lifewise'; }
+                        else if (churchMatch) { matchedContext = churchMatch; targetScreen = 'district_lifewise'; }
+                    }
+
+                    const dedupKey = allSearchData[i].name + '_' + (matchedContext || '');
+                    if (seenNames.has(dedupKey)) continue;
+                    seenNames.add(dedupKey);
+
+                    matches.push({
+                        data: allSearchData[i],
+                        matchedContext: matchedContext,
+                        targetScreen: targetScreen
+                    });
                     if (matches.length >= 50) break;
                 }
             }
 
-            matches.forEach(m => {
+            matches.forEach(item => {
+                const m = item.data;
+                const ctx = item.matchedContext;
+                const scr = item.targetScreen;
+
                 const li = document.createElement('li');
                 li.className = 'result-item';
 
+                // Prepend matched context directly ahead of the school/district information
+                const displayTitle = ctx ? `${ctx} � ${m.name}` : m.name;
+
                 if (m.type === 'school') {
-                    li.innerHTML = `<b>${m.name}</b><br><small style="color:#666;">School Data</small>`;
+                    li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#666;">School Data${ctx ? ' (Matched Employee/Church)' : ''}</small>`;
                 } else if (m.type === 'umbrella') {
-                    li.innerHTML = `<b>${m.name}</b><br><small style="color:#dc3545; font-weight:bold;">District Data (Umbrella Campaign)</small>`;
+                    li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#dc3545; font-weight:bold;">District Data (Umbrella Campaign)${ctx ? ' (Matched Employee/Church)' : ''}</small>`;
                 } else {
-                    li.innerHTML = `<b>${m.name}</b><br><small style="color:#007bff; font-weight:bold;">District Data (${m.layerName})</small>`;
+                    li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#007bff; font-weight:bold;">District Data (${m.layerName})${ctx ? ' (Matched Employee/Church)' : ''}</small>`;
                 }
 
                 li.onclick = () => {
-                    if (m.type === 'school') { window.snapToSchool(m.distId, m.schoolIdx); }
-                    else { window.flyToDistrict(m.distId); }
+                    if (m.type === 'school') { window.snapToSchool(m.distId, m.schoolIdx, scr); }
+                    else { window.flyToDistrict(m.distId, scr); }
                 };
                 resultsList.appendChild(li);
             });
