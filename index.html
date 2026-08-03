@@ -831,7 +831,7 @@
             // --- UPDATED: Churches and Sponsors (District Level) ---
             html += `<div class="app-row"><span class="app-label">Hosting Locations & Sponsoring Churches</span><span class="app-val">${formatMixedText(dist.meta['LW Hosting Locations'])}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(dist.meta['Local Business Sponsors'])}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">LW Employees</span><span class="app-val">${formatMixedText(dist.meta['LW Employees'])}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Employees and other individuals internally attached to the local program by LW</span><span class="app-val">${formatMixedText(dist.meta['Employees and other individuals internally attached to the local program by LW'])}</span></div>`;
 
             // --- REPLACE THE CHANGES BLOCK WITH THIS ---
             html += `<div style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;"><b style="font-size:11px; color:#555;">Program Status & Changes:</b></div>`;
@@ -860,7 +860,7 @@
             // --- UPDATED: Churches and Sponsors (School Level) ---
             html += `<div class="app-row"><span class="app-label">Hosting Locations</span><span class="app-val">${formatMixedText(school['LW Hosting Locations'])}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(school['Local Business Sponsors'])}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">LW Employees</span><span class="app-val">${formatMixedText(school['LW Employees'])}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Employees and other individuals internally attached to the local program by LW</span><span class="app-val">${formatMixedText(school['Employees and other individuals internally attached to the local program by LW'])}</span></div>`;
 
             // --- REPLACE THE CHANGES BLOCK WITH THIS ---
             html += `<div style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;"><b style="font-size:11px; color:#555;">Program Status & Changes:</b></div>`;
@@ -1091,7 +1091,7 @@
 
                 // --- UPDATED: Add new fields to Search String ---
                 const safeHosting = (dist.meta['LW Hosting Locations'] || '').toLowerCase();
-                const safeEmp = (dist.meta['LW Employees'] || '').toLowerCase();
+                const safeEmp = (dist.meta['Employees and other individuals internally attached to the local program by LW'] || '').toLowerCase();
 
                 allSearchData.push({
                     distId: dist.id, schoolIdx: null, specificMarker: distDot, parentMarker: distDot,
@@ -1164,7 +1164,7 @@
 
                         // --- UPDATED: EXACT NAME MAP FIX & ADDED SEARCH FIELDS ---
                         const sSafeHosting = (school['LW Hosting Locations'] || '').toLowerCase();
-                        const sSafeEmp = (school['LW Employees'] || '').toLowerCase();
+                        const sSafeEmp = (school['Employees and other individuals internally attached to the local program by LW'] || '').toLowerCase();
 
                         allSearchData.push({
                             distId: dist.id, schoolIdx: sIdx, specificMarker: schoolTriangle,
@@ -1461,12 +1461,12 @@
                     // Evaluate matching subfields to decide if we should deep-route the user to LifeWise info tabs
                     if (allSearchData[i].type === 'school') {
                         const school = dist.schools[allSearchData[i].schoolIdx];
-                        const empMatch = getMatchingToken(school['LW Employees'], query);
+                        const empMatch = getMatchingToken(school['Employees and other individuals internally attached to the local program by LW'], query);
                         const churchMatch = getMatchingToken(school['LW Hosting Locations'], query);
                         if (empMatch) { matchedContext = empMatch; targetScreen = 'local_lifewise'; }
                         else if (churchMatch) { matchedContext = churchMatch; targetScreen = 'local_lifewise'; }
                     } else {
-                        const empMatch = getMatchingToken(dist.meta['LW Employees'], query);
+                        const empMatch = getMatchingToken(dist.meta['Employees and other individuals internally attached to the local program by LW'], query);
                         const churchMatch = getMatchingToken(dist.meta['LW Hosting Locations'], query);
                         if (empMatch) { matchedContext = empMatch; targetScreen = 'district_lifewise'; }
                         else if (churchMatch) { matchedContext = churchMatch; targetScreen = 'district_lifewise'; }
@@ -1497,11 +1497,11 @@
                 const displayTitle = ctx ? `${ctx} — ${m.name}` : m.name;
 
                 if (m.type === 'school') {
-                    li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#666;">School Data${ctx ? ' (Matched Employee/Church)' : ''}</small>`;
+                    li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#666;">School Data${ctx ? ' (Matched Employee/Associate/Church/Host Location)' : ''}</small>`;
                 } else if (m.type === 'umbrella') {
-                    li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#dc3545; font-weight:bold;">District Data (Umbrella Campaign)${ctx ? ' (Matched Employee/Church)' : ''}</small>`;
+                    li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#dc3545; font-weight:bold;">District Data (Umbrella Campaign)${ctx ? ' (Matched Employee/Associate/Church/Host Location)' : ''}</small>`;
                 } else {
-                    li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#007bff; font-weight:bold;">District Data (${m.layerName})${ctx ? ' (Matched Employee/Church)' : ''}</small>`;
+                    li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#007bff; font-weight:bold;">District Data (${m.layerName})${ctx ? ' (Matched Employee/Associate/Church/Host Location)' : ''}</small>`;
                 }
 
                 li.onclick = () => {
