@@ -896,6 +896,20 @@
             if (school['Step Change']) html += `<div class="app-row"><span class="app-label">Step Change</span><span class="app-val">${school['Step Change']}</span></div>`;
         }
 
+		// ------------------------------------
+        // LIFEWISE HQ DETAILS
+        // ------------------------------------
+        else if (screenType === 'hq_main') {
+            html += `<div style="text-align: center; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                        <img src="LW%HQ.jpg" alt="LifeWise Headquarters" style="width: 100%; max-width: 240px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-bottom: 8px;">
+                        <h4 style="margin:0; color:#d32f2f; text-align: center;">LifeWise Headquarters</h4>
+                     </div>`;
+
+            html += `<div class="app-row"><span class="app-label">Address</span><span class="app-val">${dist.meta['Dist. Address'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Other Property</span><span class="app-val">${formatMixedText(dist.hostingLocations)}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Corporate/Support Center Employees</span><span class="app-val">${formatMixedText(dist.employees)}</span></div>`;
+        }
+
         html += `</div>`;
         return html;
     };
@@ -1057,6 +1071,34 @@
                 const dLat = parseFloat(dist.lat);
                 const dLon = parseFloat(dist.lon);
                 if (isNaN(dLat) || isNaN(dLon)) return;
+
+               // NEW: Intercept the HQ data and place the custom icon on the map
+                if (dist.type === 'hq') {
+                    let hqIcon = L.icon({
+                        iconUrl: 'LW logo.png',
+                        iconSize: [22, 17], // Halved dimensions (originally 45x34)
+                        iconAnchor: [11, 8], // Halved to keep the marker centered on the exact lat/lon
+                        popupAnchor: [0, -8] // Halved so the popup opens right above the new smaller marker
+                    });
+
+                    let hqMarker = L.marker([dLat, dLon], { icon: hqIcon, zIndexOffset: 2000 }).addTo(map);
+
+                    hqMarker.bindPopup("<div style='padding:10px;text-align:center;'><b>Loading HQ data...</b></div>");
+                    hqMarker.on('click', async function(e) {
+                        e.target.setPopupContent(renderPopupScreen(dist.id, 'hq_main'));
+                    });
+
+                    // Add HQ to search data
+                    const safeHosting = (dist.hostingLocations || '').toLowerCase();
+                    const safeEmp = (dist.employees || '').toLowerCase();
+                    allSearchData.push({
+                        distId: dist.id, schoolIdx: null, specificMarker: hqMarker, parentMarker: hqMarker,
+                        layerName: 'HQ', name: 'LifeWise Headquarters', type: 'hq',
+                        fullString: `LifeWise Headquarters ${dist.meta['Dist. Address'] || ''} ${safeHosting} ${safeEmp}`.toLowerCase()
+                    });
+
+                    return; // Stop here so it doesn't try to build standard district dots
+                }
 
                 let sheet = sheets.find(s => s.stepNum === dist.phaseNum) || sheets[0];
                 let distDot;
@@ -1492,11 +1534,18 @@
                         if (empMatch) { matchedContext = empMatch; targetScreen = 'local_lifewise'; }
                         else if (churchMatch) { matchedContext = churchMatch; targetScreen = 'local_lifewise'; }
                     } else {
-                        // Districts/Regions use the new top-level keys
+                        // Districts/Regions/HQ use the new top-level keys
                         const empMatch = getMatchingToken(dist.employees, query);
                         const churchMatch = getMatchingToken(dist.hostingLocations, query);
-                        if (empMatch) { matchedContext = empMatch; targetScreen = 'district_lifewise'; }
-                        else if (churchMatch) { matchedContext = churchMatch; targetScreen = 'district_lifewise'; }
+
+                        if (allSearchData[i].type === 'hq') {
+                            if (empMatch) { matchedContext = empMatch; targetScreen = 'hq_main'; }
+                            else if (churchMatch) { matchedContext = churchMatch; targetScreen = 'hq_main'; }
+                            else { targetScreen = 'hq_main'; }
+                        } else {
+                            if (empMatch) { matchedContext = empMatch; targetScreen = 'district_lifewise'; }
+                            else if (churchMatch) { matchedContext = churchMatch; targetScreen = 'district_lifewise'; }
+                        }
                     }
 
                     const dedupKey = allSearchData[i].name + '_' + (matchedContext || '');
@@ -1527,6 +1576,8 @@
                     li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#666;">School Data${ctx ? ' (Matched Employee/Associate/Church/Host Location)' : ''}</small>`;
                 } else if (m.type === 'umbrella') {
                     li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#dc3545; font-weight:bold;">District Data (Umbrella Campaign)${ctx ? ' (Matched Employee/Associate/Church/Host Location)' : ''}</small>`;
+                } else if (m.type === 'hq') {
+                    li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#d32f2f; font-weight:bold;">Headquarters${ctx ? ' (Matched Employee/Associate/Other Property)' : ''}</small>`;
                 } else {
                     li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#007bff; font-weight:bold;">District Data (${m.layerName})${ctx ? ' (Matched Employee/Associate/Church/Host Location)' : ''}</small>`;
                 }
