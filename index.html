@@ -10,7 +10,7 @@
 
     <meta name="description" content="Secular Education Association LifeWise Academy Map. View program progress, signature counts, and district status across the USA.">
     <meta name="keywords" content="LifeWise, LifeWise map, district status, launch process, Secular Education Association, SEA, signature tracking, Christian Nationalism">
-    <meta property="og:type" content="website">
+	<meta property="og:type" content="website">
     <meta property="og:url" content="http://map.seculareducationassociation.org/">
     <meta property="og:title" content="LifeWise Program Map | Secular Education Association">
     <meta property="og:description" content="View program progress, signature counts, and district status across the USA.">
@@ -147,7 +147,7 @@
 
         /* --- APP POPUP STYLES --- */
         .app-popup { width: 260px; max-height: 600px; overflow-y: auto; overflow-x: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #333; }
-        .app-popup > * { padding-right: 18px; box-sizing: border-box; }
+		.app-popup > * { padding-right: 18px; box-sizing: border-box; }
         .popup-header-red { color: #d32f2f; font-weight: bold; font-size: 13px; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 6px; margin-bottom: 10px; }
         .app-row { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px solid #f9f9f9; padding-bottom: 2px; }
         .app-label { font-weight: bold; color: #555; }
@@ -168,6 +168,17 @@
         .school-link { display: block; color: #007bff; cursor: pointer; margin-bottom: 6px; padding: 4px; background: #fcfcfc; border: 1px solid #eee; border-radius: 4px; text-decoration: none; }
         .school-link:hover { background: #f0f8ff; border-color: #b8daff; }
         .scroll-box { max-height: 180px; overflow-y: auto; padding-right: 5px; margin-bottom: 10px; }
+
+		/* --- NEW: Sticky Button Container --- */
+        .sticky-buttons {
+            position: sticky;
+            bottom: -1px; /* Anchors it to the very bottom of the scrolling window */
+            background-color: white; /* Hides the scrolling text underneath */
+            padding-top: 10px;
+            padding-bottom: 5px;
+            border-top: 1px solid #eee; /* Adds a nice subtle line separating it from the content */
+            z-index: 10;
+        }
 
         /* Custom Triangle Fixes */
         .school-triangle-icon { background: none; border: none; }
@@ -196,7 +207,7 @@
             .sidebar-intro p { font-size: 11px; }
         }
 
-        /* --- Sidebar Toggle Styles --- */
+		/* --- Sidebar Toggle Styles --- */
 #sidebar {
     transition: margin-left 0.3s ease;
 }
@@ -320,7 +331,7 @@
             <div class="share-container">
                 <div style="width: 100%; text-align: center; font-weight: bold; color: #d32f2f; font-size: 13px; margin-bottom: 5px;">Sound the alarm, share the map</div>
 
-                <a href="https://www.facebook.com/sharer/sharer.php?u=http://map.seculareducationassociation.org/" target="_blank" class="share-btn fb">Facebook</a>
+				<a href="https://www.facebook.com/sharer/sharer.php?u=http://map.seculareducationassociation.org/" target="_blank" class="share-btn fb">Facebook</a>
                 <a href="https://twitter.com/intent/tweet?url=http://map.seculareducationassociation.org/" target="_blank" class="share-btn tw">X</a>
                 <a href="https://www.reddit.com/submit?url=http://map.seculareducationassociation.org/&title=LifeWise%20Program%20Map" target="_blank" class="share-btn rd">Reddit</a>
                 <a href="https://www.threads.net/intent/post?text=http://map.seculareducationassociation.org/" target="_blank" class="share-btn th">Threads</a>
@@ -368,7 +379,7 @@
     const allSearchData = [];
     const districtsData = {};
 
-    // --- Sidebar Collapse Logic ---
+	// --- Sidebar Collapse Logic ---
     window.toggleSidebar = function() {
         const sidebar = document.getElementById('sidebar');
         const arrow = document.getElementById('toggleArrow');
@@ -393,7 +404,7 @@
         document.getElementById('toggleArrow').innerHTML = '?';
     }
 
-    let sheets = [
+	let sheets = [
         { name: "Step 0", stepNum: 0, desc: "Under 10 Signatures", color: "#ABABAB" },
         { name: "Step 1", stepNum: 1, desc: "10-50 Signatures", color: "#2E85DB" },
         { name: "Step 2", stepNum: 2, desc: "Kickoff Meeting", color: "#ACDBB0" },
@@ -514,7 +525,7 @@
         return `<a href="${href}" target="_blank">${displayUrl}</a>`;
     };
 
-    const getDirectLinkHtml = (label, url) => {
+	const getDirectLinkHtml = (label, url) => {
         if (!url || url.trim() === "" || url.toLowerCase() === "nan") return "";
         let href = url.trim();
         if (!href.toLowerCase().startsWith('http')) href = 'https://' + href;
@@ -541,7 +552,7 @@
         else { prompt("Copy this link to share the specific view:", deepLink); }
     };
 
-    window.shareSchool = function(distName, schoolName) {
+	window.shareSchool = function(distName, schoolName) {
         const baseUrl = window.location.href.split('?')[0];
         // Creates a link with both the district and school name parameters
         const deepLink = `${baseUrl}?district=${encodeURIComponent(distName)}&school=${encodeURIComponent(schoolName)}`;
@@ -662,50 +673,41 @@
                             <b style="font-size:12px; color:#dc3545;">District-Wide Umbrella Campaign</b><br>
                             This is a general interest page. See the active regions below for specific targeted programs.
                          </div>`;
-            } else {
-                let lwSchoolsCount = dist.schools.filter(s => s['Grades Served'] && s['Grades Served'].trim() !== '').length;
-                let topHeader = dist.phaseNum >= 10
-                    ? `LifeWise is Live<br><span style="font-size:11px; color:#555; font-weight:normal;">Schools with LifeWise: ${lwSchoolsCount}</span>`
-                    : `LifeWise Launch Step: ${dist.phaseNum}<br><span style="font-size:11px; color:#555; font-weight:normal;">Interest List Signatures: ${dist.signatures || '0'}</span>`;
-
-                // --- NEW: Weekly Status Change Logic ---
-                let sigChange = dist.meta['Sig. Change'];
-                let stepChange = dist.meta['Step Change'];
-
-                if (sigChange || stepChange) {
-                    topHeader += `<br><span style="font-size:11px; color:#d32f2f; font-weight:bold; display:block; margin-top:4px;">Weekly Status Change:</span>`;
-                    topHeader += `<span style="font-size:10px; color:#555; font-weight:normal;">`;
-                    let changes = [];
-                    if (stepChange) changes.push(`Step: ${stepChange}`);
-                    if (sigChange) changes.push(`Signatures: ${sigChange}`);
-                    topHeader += changes.join(' | ') + `</span>`;
-                }
-
-                html += `<div class="popup-header-red">${topHeader}</div>`;
             }
+
+            // --- NEW HEADER STYLING ---
+            let lwTitle = dist.phaseNum >= 10 ? `<div style="color:#d32f2f; font-size:16px; font-weight:bold; text-align:center; margin-bottom:5px;">LifeWise is Live</div>`
+                : `<div style="color:#d32f2f; font-size:14px; font-weight:bold; text-align:center;">LifeWise Launch Step: ${dist.phaseNum}</div>
+                   <div style="font-size:11px; color:#555; text-align:center; margin-bottom:5px;">Interest List Signatures: ${dist.signatures || '0'}</div>`;
+
+            html += `<div style="border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 10px;">`;
+            html += lwTitle;
+
+            html += `<div style="text-align: center; font-size: 15px; font-weight: bold; margin-bottom: 2px; color:#333;">${dist.meta['Dist. Name']} ${districtCharterBadge}</div>`;
+            if (dist.meta['Dist. URL'] && dist.meta['Dist. URL'].trim() !== '' && dist.meta['Dist. URL'].toLowerCase() !== 'nan') {
+                html += `<div style="text-align: center; font-size: 12px; margin-bottom: 8px;">${formatLink(dist.meta['Dist. URL'])}</div>`;
+            }
+
+            let sigChange = dist.meta['Sig. Change'];
+            let stepChange = dist.meta['Step Change'];
+            if (sigChange || stepChange) {
+                html += `<div style="text-align:center; font-size:11px; color:#d32f2f; font-weight:bold; margin-top:4px;">Weekly Status Change:</div>`;
+                let changes = [];
+                if (stepChange) changes.push(`Step: ${stepChange}`);
+                if (sigChange) changes.push(`Signatures: ${sigChange}`);
+                html += `<div style="text-align:center; font-size:10px; color:#555;">${changes.join(' | ')}</div>`;
+            }
+            html += `</div>`;
 
             if (dist.isNonTraditional) {
                 html += `<div style="background:#e2e3e5; padding:4px; text-align:center; font-weight:bold; font-size:10px; margin-bottom:8px; border-radius:3px;">Non-traditional School</div>`;
             }
 
-            html += `<div class="app-row"><span class="app-label">Dist. Name</span><span class="app-val"><b>${dist.meta['Dist. Name']}</b>${districtCharterBadge}</span></div>`;
-
             if (dist.type === 'region' && dist.regionName) {
                 html += `<div class="app-row"><span class="app-label">Dist. Region</span><span class="app-val">${dist.regionName}</span></div>`;
             }
 
-            html += `<div class="app-row"><span class="app-label">Dist. Address</span><span class="app-val">${dist.meta['Dist. Address'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Dist. Phone</span><span class="app-val">${dist.meta['Dist. Phone'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Dist. URL</span><span class="app-val">${formatLink(dist.meta['Dist. URL'])}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Dist. Type</span><span class="app-val">${dist.meta['Dist. Type'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Dist. Locale</span><span class="app-val">${dist.meta['Dist. Locale'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Dist. Charter Status</span><span class="app-val">${dist.meta['Dist. Charter Status'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Dist. Total Number of Schools</span><span class="app-val">${dist.meta['Dist. Total Number of Schools'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Dist. Total Number of Charter Schools</span><span class="app-val">${dist.meta['Dist. Total Number of Charter Schools'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Dist. Total Students, All Grades</span><span class="app-val">${dist.meta['Dist. Total Students, All Grades'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Dist. Pupil/Teacher Ratio</span><span class="app-val">${dist.meta['Dist. Pupil/Teacher Ratio'] || 'N/A'}</span></div>`;
-
-            // --- NEW: District Policy & Media Links with Multi-URL Support ---
+            // --- NEW: District Policy & Media Links ---
             let localIssuesHtml = "";
             let baseIssueUrl = dist.meta['Local Issues'];
 
@@ -735,24 +737,72 @@
                             localIssuesHtml +
                             getDirectLinkHtml("Local Media", dist.meta['Local Media']);
             if (linksHtml) {
-                html += `<div style="margin-top: 10px; margin-bottom: 10px; border-top: 1px solid #eee; padding-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px;">${linksHtml}</div>`;
+                html += `<div style="margin-top: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; text-align:center;">${linksHtml}</div>`;
             }
 
-            // BUTTONS ROUTING
+            // --- Schools Tracked & Participating List ---
+            if (dist.type !== 'umbrella') {
+                let participating = dist.schools.filter(s => s['Grades Served'] && s['Grades Served'].trim() !== '');
+                if (participating.length > 0) {
+                    html += `<div style="font-weight:bold; font-size:10px; margin-bottom:2px; margin-left:8px; color:#555;">Participating Schools: <span style="font-weight:normal;">${participating.length}</span></div>`;
+                    html += `<ul style="margin:2px 0 10px 0; padding-left:24px; font-size:10px; color:#555;">`;
+                    dist.schools.forEach((s, idx) => {
+                        if (s['Grades Served'] && s['Grades Served'].trim() !== '') {
+                            html += `<li style="margin-bottom:3px;"><a href="#" onclick="snapToSchool('${distKey}', ${idx}); return false;" style="color:#007bff; text-decoration:underline; cursor:pointer;">${s['School Name']}</a> (Grades: ${s['Grades Served']})</li>`;
+                        }
+                    });
+                    html += `</ul>`;
+                }
+
+                // --- LifeWise Info Section ---
+                html += `<div style="border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px;">
+                            <div style="font-weight:bold; font-size:12px; color:#333; margin-bottom:8px; text-decoration:underline;">LifeWise Info</div>
+                         </div>`;
+
+                html += `<div class="app-row"><span class="app-label">Director Name</span><span class="app-val">${dist.meta['Director Name'] || 'N/A'}</span></div>`;
+                let dEmails = [...new Set([dist.meta['Director Email'], dist.meta['Director Email 2'], dist.meta['Director Email 3']].filter(e => e && e.trim() !== ''))];
+                html += `<div class="app-row"><span class="app-label">Director Email</span><span class="app-val">${dEmails.length > 0 ? dEmails.join('<br>') : 'N/A'}</span></div>`;
+                html += `<div class="app-row"><span class="app-label">Mailing Address</span><span class="app-val">${dist.meta['Mailing Address'] || 'N/A'}</span></div>`;
+
+                let allDistHosting = [dist.meta['LW Hosting Locations']];
+                let allDistEmp = [dist.meta['LW Employees']];
+                dist.schools.forEach(s => {
+                    allDistHosting.push(s['LW Hosting Locations']);
+                    allDistEmp.push(s['LW Employees']);
+                });
+
+                html += `<div class="app-row"><span class="app-label">District Hosting Locations & Sponsoring Churches</span><span class="app-val">${formatMixedText(mergeTokens(...allDistHosting))}</span></div>`;
+                html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(dist.meta['Local Business Sponsors'])}</span></div>`;
+                html += `<div class="app-row"><span class="app-label">Employees & Individuals Attached</span><span class="app-val">${formatMixedText(mergeTokens(...allDistEmp))}</span></div>`;
+
+                // --- ADDING MISSING SECTION ---
+                html += `<div style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;"><b style="font-size:11px; color:#555;">Program Status & Changes:</b></div>`;
+                html += `<div class="app-row"><span class="app-label">Current Launch Step</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${dist.phaseNum || '0'}</span></div>`;
+                html += `<div class="app-row"><span class="app-label">Current Signatures</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${dist.signatures || '0'}</span></div>`;
+                html += `<div class="app-row"><span class="app-label">Weekly Change</span><span class="app-val">${dist.meta['Weekly Change'] || 'None'}</span></div>`;
+                if (dist.meta['Sig. Change']) html += `<div class="app-row"><span class="app-label">Sig. Change</span><span class="app-val">${dist.meta['Sig. Change']}</span></div>`;
+                if (dist.meta['Step Change']) html += `<div class="app-row"><span class="app-label">Step Change</span><span class="app-val">${dist.meta['Step Change']}</span></div>`;
+            }
+
+            // Sticky Bottom
+            html += `<div class="sticky-buttons">`;
+
+            html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_stats')">District Details & Contact Info</button>`;
+
             if (dist.type === 'umbrella') {
                 let regions = window.districtsByCode[dist.meta['Dist. Code']].filter(d => d.type === 'region');
                 html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_details')">Lifewise Divisional Regions (${regions.length})</button>`;
-                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_lifewise')">LifeWise District Info</button>`;
-            } else if (dist.type === 'region') {
-                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_details')">Schools Tracked by LW in Region (${dist.schools.length})</button>`;
-                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_lifewise')">LifeWise Regional Info</button>`;
-            } else { // Single District
-                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_details')">Schools Tracked by LW in District (${dist.schools.length})</button>`;
-                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_lifewise')">LifeWise District Info</button>`;
+            } else {
+                let trackedCount = dist.schools.length;
+                let totalSchools = dist.meta['Dist. Total Number of Schools'] || '?';
+                let trackedText = dist.type === 'region' ? `Schools Tracked by LW in Region: ${trackedCount}/${totalSchools}` : `Schools Tracked by LW in District: ${trackedCount}/${totalSchools}`;
+                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_details')">${trackedText}</button>`;
             }
 
             const safeName = dist.name.replace(/'/g, "\\'");
             html += `<button onclick="shareDistrict('${safeName}')" class="popup-share-btn">Share Info</button>`;
+
+            html += `</div>`;
         }
 
         // ------------------------------------
@@ -809,6 +859,28 @@
         }
 
         // ------------------------------------
+        // DISTRICT STATS & CONTACT INFO
+        // ------------------------------------
+        else if (screenType === 'district_stats') {
+            html += `<div class="back-btn" onclick="updatePopup('${distKey}', 'main')"></div>`;
+            html += `<h4 style="margin:0 0 10px 0; color:#d32f2f;">District Details & Contact Info</h4>`;
+
+            // NEW: Restored Dist Name and URL fields
+            html += `<div class="app-row"><span class="app-label">Dist. Name</span><span class="app-val"><b>${dist.meta['Dist. Name']}</b>${districtCharterBadge}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. URL</span><span class="app-val">${formatLink(dist.meta['Dist. URL'])}</span></div>`;
+
+            html += `<div class="app-row"><span class="app-label">Dist. Address</span><span class="app-val">${dist.meta['Dist. Address'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Phone</span><span class="app-val">${dist.meta['Dist. Phone'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Type</span><span class="app-val">${dist.meta['Dist. Type'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Locale</span><span class="app-val">${dist.meta['Dist. Locale'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Charter Status</span><span class="app-val">${dist.meta['Dist. Charter Status'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Total Number of Schools</span><span class="app-val">${dist.meta['Dist. Total Number of Schools'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Total Number of Charter Schools</span><span class="app-val">${dist.meta['Dist. Total Number of Charter Schools'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Total Students, All Grades</span><span class="app-val">${dist.meta['Dist. Total Students, All Grades'] || 'N/A'}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Dist. Pupil/Teacher Ratio</span><span class="app-val">${dist.meta['Dist. Pupil/Teacher Ratio'] || 'N/A'}</span></div>`;
+        }
+
+        // ------------------------------------
         // SCHOOL DETAILS
         // ------------------------------------
         else if (screenType === 'school_details' && schoolIdx !== null) {
@@ -831,60 +903,15 @@
             html += `<div class="app-row"><span class="app-label">Lunch Program</span><span class="app-val">${school['School Lunch Program Status'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Free/Reduced Lunch</span><span class="app-val">${school['School Free and Reduced Lunch Student Totals'] || 'N/A'}</span></div>`;
 
+            html += `<div class="sticky-buttons">`;
+
             html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'local_lifewise', ${schoolIdx})">Local LifeWise Info</button>`;
 
-            // Generate safe strings to prevent apostrophes from breaking the onclick function
             const safeDistName = (dist.meta['Dist. Name'] || '').replace(/'/g, "\\'");
             const safeSchoolName = (school['School Name'] || '').replace(/'/g, "\\'");
-
             html += `<button onclick="shareSchool('${safeDistName}', '${safeSchoolName}')" class="popup-share-btn" style="margin-top: 10px;">Share School Info</button>`;
-        }
 
-        // ------------------------------------
-        // LOCAL LIFEWISE (FROM DISTRICT/REGION)
-        // ------------------------------------
-        else if (screenType === 'district_lifewise') {
-            html += `<div class="back-btn" onclick="updatePopup('${distKey}', 'main')"></div>`;
-
-            // --- NEW: Dynamic Header Text ---
-            let infoTitle = dist.type === 'region' ? "LifeWise Regional Info" : "LifeWise District Info";
-            html += `<h4 style="margin:0 0 10px 0; color:#d32f2f;">${infoTitle}</h4>`;
-            // --------------------------------
-
-            let participating = dist.schools.filter(s => s['Grades Served'] && s['Grades Served'].trim() !== '');
-            if (participating.length > 0) {
-                html += `<div style="font-weight:bold; font-size:11px; margin-bottom:4px; color:#555;">Participating Schools:</div>`;
-                html += `<ul style="margin:0 0 10px 0; padding-left:15px; font-size:11px;">`;
-                participating.forEach(s => { html += `<li>${s['School Name']} (Grades: ${s['Grades Served']})</li>`; });
-                html += `</ul>`;
-            }
-
-            html += `<div class="app-row"><span class="app-label">Director Name</span><span class="app-val">${dist.meta['Director Name'] || 'N/A'}</span></div>`;
-            let dEmails = [...new Set([dist.meta['Director Email'], dist.meta['Director Email 2'], dist.meta['Director Email 3']].filter(e => e && e.trim() !== ''))];
-            html += `<div class="app-row"><span class="app-label">Director Email</span><span class="app-val">${dEmails.length > 0 ? dEmails.join('<br>') : 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Mailing Address</span><span class="app-val">${dist.meta['Mailing Address'] || 'N/A'}</span></div>`;
-
-            // --- UPDATED: Churches and Sponsors (District Level - Combined & Deduplicated) ---
-            let allDistHosting = [dist.hostingLocations || dist.meta['LW Hosting Locations']];
-            let allDistEmp = [dist.employees || dist.meta['LW Employees']];
-
-            // Loop through all connected schools to gather their specific data
-            dist.schools.forEach(s => {
-                allDistHosting.push(s['LW Hosting Locations']);
-                allDistEmp.push(s['LW Employees']);
-            });
-
-            html += `<div class="app-row"><span class="app-label">District Hosting Locations & Sponsoring Churches</span><span class="app-val">${formatMixedText(mergeTokens(...allDistHosting))}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(dist.meta['Local Business Sponsors'])}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Employees & Other Individuals Attached To District Program Internally By LW</span><span class="app-val">${formatMixedText(mergeTokens(...allDistEmp))}</span></div>`;
-
-            // --- REPLACE THE CHANGES BLOCK WITH THIS ---
-            html += `<div style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;"><b style="font-size:11px; color:#555;">Program Status & Changes:</b></div>`;
-            html += `<div class="app-row"><span class="app-label">Current Launch Step</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${dist.phaseNum || '0'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Current Signatures</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${dist.signatures || '0'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Weekly Change</span><span class="app-val">${dist.meta['Weekly Change'] || 'None'}</span></div>`;
-            if (dist.meta['Sig. Change']) html += `<div class="app-row"><span class="app-label">Sig. Change</span><span class="app-val">${dist.meta['Sig. Change']}</span></div>`;
-            if (dist.meta['Step Change']) html += `<div class="app-row"><span class="app-label">Step Change</span><span class="app-val">${dist.meta['Step Change']}</span></div>`;
+            html += `</div>`;
         }
 
         // ------------------------------------
@@ -903,15 +930,13 @@
             html += `<div class="app-row"><span class="app-label">Mailing Address</span><span class="app-val">${school['Mailing Address'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">LW URL</span><span class="app-val">${formatLink(school['LW URL'])}</span></div>`;
 
-            // --- UPDATED: Churches and Sponsors (School Level - Combined & Deduplicated) ---
-            let combinedSchoolHosting = mergeTokens(dist.hostingLocations, school['LW Hosting Locations']);
-            let combinedSchoolEmp = mergeTokens(dist.employees, school['LW Employees']);
+            let combinedSchoolHosting = mergeTokens(dist.meta['LW Hosting Locations'], school['LW Hosting Locations']);
+            let combinedSchoolEmp = mergeTokens(dist.meta['LW Employees'], school['LW Employees']);
 
             html += `<div class="app-row"><span class="app-label">District Hosting Locations & Sponsoring Churches</span><span class="app-val">${formatMixedText(combinedSchoolHosting)}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(school['Local Business Sponsors'])}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Employees & Other Individuals Attached To District Program Internally By LW</span><span class="app-val">${formatMixedText(combinedSchoolEmp)}</span></div>`;
 
-            // --- REPLACE THE CHANGES BLOCK WITH THIS ---
             html += `<div style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;"><b style="font-size:11px; color:#555;">Program Status & Changes:</b></div>`;
             html += `<div class="app-row"><span class="app-label">Current Launch Step</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${school['Program Launch Step'] || '0'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Current Signatures</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${school['Signatures'] || '0'}</span></div>`;
@@ -920,18 +945,18 @@
             if (school['Step Change']) html += `<div class="app-row"><span class="app-label">Step Change</span><span class="app-val">${school['Step Change']}</span></div>`;
         }
 
-		// ------------------------------------
+        // ------------------------------------
         // LIFEWISE HQ DETAILS
         // ------------------------------------
         else if (screenType === 'hq_main') {
             html += `<div style="text-align: center; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
-                        <img src="LW HQ.png" alt="LifeWise Headquarters" style="width: 100%; max-width: 240px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-bottom: 8px;">
-                        <h4 style="margin:0; color:#d32f2f; text-align: center;">LifeWise Headquarters</h4>
-                     </div>`;
+                <img src="LW HQ.png" alt="LifeWise Headquarters" style="width: 100%; max-width: 240px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-bottom: 8px;">
+                <h4 style="margin:0; color:#d32f2f; text-align: center;">LifeWise Headquarters</h4>
+             </div>`;
 
             html += `<div class="app-row"><span class="app-label">Address</span><span class="app-val">${dist.meta['Dist. Address'] || 'N/A'}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Other Property</span><span class="app-val">${formatMixedText(dist.hostingLocations)}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Corporate/Support Center Employees</span><span class="app-val">${formatMixedText(dist.employees)}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Other Property</span><span class="app-val">${formatMixedText(dist.meta['LW Hosting Locations'])}</span></div>`;
+            html += `<div class="app-row"><span class="app-label">Corporate/Support Center Employees</span><span class="app-val">${formatMixedText(dist.meta['LW Employees'])}</span></div>`;
         }
 
         html += `</div>`;
@@ -1109,12 +1134,13 @@
 
                     hqMarker.bindPopup("<div style='padding:10px;text-align:center;'><b>Loading HQ data...</b></div>");
                     hqMarker.on('click', async function(e) {
+					    await window.ensureStateDataLoaded(dist.state);
                         e.target.setPopupContent(renderPopupScreen(dist.id, 'hq_main'));
                     });
 
                     // Add HQ to search data
-                    const safeHosting = (dist.hostingLocations || '').toLowerCase();
-                    const safeEmp = (dist.employees || '').toLowerCase();
+                    const safeHosting = (dist.meta['LW Hosting Locations'] || '').toLowerCase();
+                    const safeEmp = (dist.meta['LW Employees'] || '').toLowerCase();
                     allSearchData.push({
                         distId: dist.id, schoolIdx: null, specificMarker: hqMarker, parentMarker: hqMarker,
                         layerName: 'HQ', name: 'LifeWise Headquarters', type: 'hq',
@@ -1181,8 +1207,8 @@
                 const displayName = dist.regionName ? `${dist.name} - ${dist.regionName}` : dist.name;
 
                 // --- UPDATED: Add new fields to Search String ---
-                const safeHosting = (dist.hostingLocations || '').toLowerCase();
-                const safeEmp = (dist.employees || '').toLowerCase();
+                const safeHosting = (dist.meta['LW Hosting Locations'] || '').toLowerCase();
+                const safeEmp = (dist.meta['LW Employees'] || '').toLowerCase();
 
                 allSearchData.push({
                     distId: dist.id, schoolIdx: null, specificMarker: distDot, parentMarker: distDot,
@@ -1552,23 +1578,22 @@
                     // Evaluate matching subfields to decide if we should deep-route the user to LifeWise info tabs
                     if (allSearchData[i].type === 'school') {
                         const school = dist.schools[allSearchData[i].schoolIdx];
-                        // Schools still use the original keys
                         const empMatch = getMatchingToken(school['LW Employees'], query);
                         const churchMatch = getMatchingToken(school['LW Hosting Locations'], query);
                         if (empMatch) { matchedContext = empMatch; targetScreen = 'local_lifewise'; }
                         else if (churchMatch) { matchedContext = churchMatch; targetScreen = 'local_lifewise'; }
                     } else {
-                        // Districts/Regions/HQ use the new top-level keys
-                        const empMatch = getMatchingToken(dist.employees, query);
-                        const churchMatch = getMatchingToken(dist.hostingLocations, query);
+                        const empMatch = getMatchingToken(dist.meta['LW Employees'], query);
+                        const churchMatch = getMatchingToken(dist.meta['LW Hosting Locations'], query);
 
+                        // RESTORED: HQ specific routing rules
                         if (allSearchData[i].type === 'hq') {
                             if (empMatch) { matchedContext = empMatch; targetScreen = 'hq_main'; }
                             else if (churchMatch) { matchedContext = churchMatch; targetScreen = 'hq_main'; }
                             else { targetScreen = 'hq_main'; }
                         } else {
-                            if (empMatch) { matchedContext = empMatch; targetScreen = 'district_lifewise'; }
-                            else if (churchMatch) { matchedContext = churchMatch; targetScreen = 'district_lifewise'; }
+                            if (empMatch) { matchedContext = empMatch; targetScreen = 'main'; }
+                            else if (churchMatch) { matchedContext = churchMatch; targetScreen = 'main'; }
                         }
                     }
 
@@ -1594,13 +1619,14 @@
                 li.className = 'result-item';
 
                 // Prepend matched context directly ahead of the school/district information
-                const displayTitle = ctx ? `${ctx} - ${m.name}` : m.name;
+                const displayTitle = ctx ? `${ctx} — ${m.name}` : m.name;
 
                 if (m.type === 'school') {
                     li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#666;">School Data${ctx ? ' (Matched Employee/Associate/Church/Host Location)' : ''}</small>`;
                 } else if (m.type === 'umbrella') {
                     li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#dc3545; font-weight:bold;">District Data (Umbrella Campaign)${ctx ? ' (Matched Employee/Associate/Church/Host Location)' : ''}</small>`;
                 } else if (m.type === 'hq') {
+                    // RESTORED: Custom specific UI format for the Headquarters result
                     li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#d32f2f; font-weight:bold;">Headquarters${ctx ? ' (Matched Employee/Associate/Other Property)' : ''}</small>`;
                 } else {
                     li.innerHTML = `<b>${displayTitle}</b><br><small style="color:#007bff; font-weight:bold;">District Data (${m.layerName})${ctx ? ' (Matched Employee/Associate/Church/Host Location)' : ''}</small>`;
@@ -1628,7 +1654,7 @@
         resultsList.innerHTML = "";
     });
     document.getElementById('btnFocusSearch').addEventListener('click', () => document.getElementById('mapSearch').focus());
-    // --- Embed Button Logic ---
+	// --- Embed Button Logic ---
     document.getElementById('btnEmbed').addEventListener('click', function(e) {
         e.preventDefault(); // Prevents the page from jumping to the top
 
@@ -1642,7 +1668,7 @@
         prompt("Copy this code to embed the map on your website:", embedCode);
     });
 
-    // --- NEW: Dynamic Marker Resizing ---
+	// --- NEW: Dynamic Marker Resizing ---
     function adjustMarkerSizes() {
         const currentZoom = map.getZoom();
 
