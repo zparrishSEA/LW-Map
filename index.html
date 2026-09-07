@@ -138,7 +138,7 @@
         .share-container { margin-top: 15px; font-size: 11px; color: #666; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; border-top: 1px solid #eee; padding-top: 15px; }
         .share-btn { padding: 4px 8px; border-radius: 4px; text-decoration: none; color: white; font-weight: bold; cursor: pointer; font-size: 10px; display: inline-block; flex-grow: 1; text-align: center; }
 
-        .popup-share-btn { background-color: #007bff; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 11px; cursor: pointer; width: 100%; margin-top: 8px; font-weight: bold; }
+        .popup-share-btn { background-color: #007bff; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 11px; cursor: pointer; width: 100%; margin-top: 4px; font-weight: bold; }
         .popup-share-btn:hover { background-color: #0056b3; }
 
         .fb { background-color: #1877F2; } .tw { background-color: #000; } .rd { background-color: #FF4500; }
@@ -147,7 +147,7 @@
 
         /* --- APP POPUP STYLES --- */
         .app-popup { width: 260px; max-height: 600px; overflow-y: auto; overflow-x: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #333; }
-		.app-popup > * { padding-right: 18px; box-sizing: border-box; }
+		.app-popup > * { padding-right: 16px; box-sizing: border-box; }
         .popup-header-red { color: #d32f2f; font-weight: bold; font-size: 13px; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 6px; margin-bottom: 10px; }
         .app-row { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px solid #f9f9f9; padding-bottom: 2px; }
         .app-label { font-weight: bold; color: #555; }
@@ -155,7 +155,7 @@
         .app-val a { color: #007bff; text-decoration: none; }
         .app-val a:hover { text-decoration: underline; }
 
-        .nav-btn { display: block; width: 100%; background: #f4f4f4; border: 1px solid #ddd; padding: 8px; margin-top: 8px; cursor: pointer; border-radius: 4px; font-weight: bold; color: #333; text-align: left; }
+		.nav-btn { display: block; width: 100%; background: #f4f4f4; border: 1px solid #ddd; padding: 6px; margin-top: 4px; cursor: pointer; border-radius: 2px; font-weight: bold; color: #333; text-align: left; white-space: nowrap; overflow: hidden; font-size: 6px;}
         /* Change the question mark to a right arrow */
         .nav-btn::after { content: " \2192"; float: right; color: #888; }
         .nav-btn:hover { background: #e9e9e9; }
@@ -174,8 +174,8 @@
             position: sticky;
             bottom: -1px; /* Anchors it to the very bottom of the scrolling window */
             background-color: white; /* Hides the scrolling text underneath */
-            padding-top: 10px;
-            padding-bottom: 5px;
+            padding-top: 3px;
+            padding-bottom: 3px;
             border-top: 1px solid #eee; /* Adds a nice subtle line separating it from the content */
             z-index: 10;
         }
@@ -300,6 +300,10 @@
             white-space: nowrap;
         }
         .progress-tooltip::before { border-top-color: #d32f2f; }
+
+.leaflet-popup-content {
+    margin: 12px 8px 12px 12px !important;
+}
 
     </style>
 </head>
@@ -465,6 +469,8 @@
                 }
             });
         }
+
+		window.syncButtonSizes();
     });
 
     map.on('popupclose', function(e) {
@@ -564,12 +570,49 @@
         }
     };
 
+	window.syncButtonSizes = function() {
+    // NEW: We wrap the entire logic in a 100ms delay to wait for the popup animation to finish!
+    setTimeout(() => {
+        const popup = document.querySelector('.leaflet-popup-content .app-popup');
+        if (!popup) return;
+
+        const buttons = popup.querySelectorAll('.nav-btn');
+        if (buttons.length === 0) return;
+
+        let minSize = 12; // Our default font size
+
+        // 1. Measure the required size for each button
+        buttons.forEach(btn => {
+            btn.style.fontSize = '12px'; // Reset to measure
+
+            // Because of the delay, scrollWidth and clientWidth will now be 100% accurate
+            if (btn.scrollWidth > btn.clientWidth) {
+                // Calculate the exact ratio of overflow
+                const ratio = btn.clientWidth / btn.scrollWidth;
+
+                // Apply the ratio and multiply by 0.95 to give a 5% visual buffer
+                const neededSize = (12 * ratio) * 0.95;
+
+                if (neededSize < minSize) minSize = neededSize;
+            }
+        });
+
+        if (minSize < 8.5) minSize = 8.5; // Prevent text from becoming entirely illegible
+
+        // 2. Apply the smallest calculated size to ALL buttons in this popup
+        buttons.forEach(btn => {
+            btn.style.fontSize = minSize + 'px';
+        });
+    }, 100); // 100 milliseconds is fast enough that the user won't notice the delay
+};
+
     window.updatePopup = function(distId, screenType, arg = null) {
         setTimeout(() => {
             if (window.currentActivePopup) {
                 const newHtml = renderPopupScreen(distId, screenType, arg);
                 window.currentActivePopup.setContent(newHtml);
                 window.currentActivePopup.update();
+				window.syncButtonSizes();
             }
         }, 10);
     };
@@ -591,6 +634,7 @@
             setTimeout(() => {
                 target.specificMarker.setPopupContent(renderPopupScreen(distId, screenType, sIdx));
                 target.specificMarker.openPopup();
+				window.syncButtonSizes();
             }, 600);
         }
     };
@@ -610,6 +654,7 @@
             setTimeout(() => {
                 target.parentMarker.setPopupContent(renderPopupScreen(targetId, screenType));
                 target.parentMarker.openPopup();
+				window.syncButtonSizes();
             }, 600);
         }
     };
@@ -675,9 +720,22 @@
                          </div>`;
             }
 
+            // --- DYNAMIC MAXIMUM PHASE CALCULATION ---
+            let displayPhase = dist.phaseNum; // Set the default phase
+
+            // If it's an umbrella, check every single school inside it to find the highest active step
+            if (dist.type === 'umbrella' && dist.schools) {
+                dist.schools.forEach(school => {
+                    let sStep = parseInt(school['Program Launch Step']) || 0;
+                    if (sStep > displayPhase) {
+                        displayPhase = sStep; // Overwrite if we find a higher step
+                    }
+                });
+            }
+
             // --- NEW HEADER STYLING ---
-            let lwTitle = dist.phaseNum >= 10 ? `<div style="color:#d32f2f; font-size:16px; font-weight:bold; text-align:center; margin-bottom:5px;">LifeWise is Live</div>`
-                : `<div style="color:#d32f2f; font-size:14px; font-weight:bold; text-align:center;">LifeWise Launch Step: ${dist.phaseNum}</div>
+            let lwTitle = displayPhase >= 10 ? `<div style="color:#d32f2f; font-size:16px; font-weight:bold; text-align:center; margin-bottom:5px;">LifeWise is Live</div>`
+                : `<div style="color:#d32f2f; font-size:14px; font-weight:bold; text-align:center;">LifeWise Launch Step: ${displayPhase}</div>
                    <div style="font-size:11px; color:#555; text-align:center; margin-bottom:5px;">Interest List Signatures: ${dist.signatures || '0'}</div>`;
 
             html += `<div style="border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 10px;">`;
@@ -783,21 +841,41 @@
                 if (dist.meta['Sig. Change']) html += `<div class="app-row"><span class="app-label">Sig. Change</span><span class="app-val">${dist.meta['Sig. Change']}</span></div>`;
                 if (dist.meta['Step Change']) html += `<div class="app-row"><span class="app-label">Step Change</span><span class="app-val">${dist.meta['Step Change']}</span></div>`;
             }
+			else {
+                // --- NEW: Umbrella Divisional Regions List ---
+                let regions = window.districtsByCode[dist.meta['Dist. Code']].filter(d => d.type === 'region');
+                if (regions.length > 0) {
+                    html += `<div style="font-weight:bold; font-size:10px; margin-bottom:2px; margin-left:8px; color:#555;">LifeWise Divisional Regions: <span style="font-weight:normal;">${regions.length}</span></div>`;
+                    html += `<ul style="margin:2px 0 10px 0; padding-left:24px; font-size:10px; color:#555;">`;
+
+                    regions.forEach(r => {
+                        let rSchools = r.schools.length;
+
+                        // --- NEW LOGIC: Calculate participating schools ---
+                        // We filter the region's schools to find only those with a valid 'Grades Served' entry
+                        let participatingCount = r.schools.filter(s => s['Grades Served'] && s['Grades Served'].trim() !== '').length;
+
+                        // Clicking these links will smoothly animate the map directly to that Region's umbrella!
+                        html += `<li style="margin-bottom:3px;"><a href="#" onclick="flyToDistrict('${r.id}'); return false;" style="color:#007bff; text-decoration:underline; cursor:pointer;">${r.regionName}</a> (${participatingCount} Participating / ${rSchools} Tracked)</li>`;
+                    });
+
+                    html += `</ul>`;
+                }
+            }
 
             // Sticky Bottom
             html += `<div class="sticky-buttons">`;
 
-            html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_stats')">District Details & Contact Info</button>`;
+            // --- FIXED: Removed the umbrella-only check so this displays on all district popups ---
+            let trackedCount = dist.schools.length;
+		    let totalSchools = dist.meta['Dist. Total Number of Schools'] || '?';
+            let trackedText = dist.type === 'region'
+                ? `Schools Tracked by LW: ${trackedCount}/${totalSchools}`
+                : `Schools Tracked by LW: ${trackedCount}/${totalSchools}`;
 
-            if (dist.type === 'umbrella') {
-                let regions = window.districtsByCode[dist.meta['Dist. Code']].filter(d => d.type === 'region');
-                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_details')">Lifewise Divisional Regions (${regions.length})</button>`;
-            } else {
-                let trackedCount = dist.schools.length;
-                let totalSchools = dist.meta['Dist. Total Number of Schools'] || '?';
-                let trackedText = dist.type === 'region' ? `Schools Tracked by LW in Region: ${trackedCount}/${totalSchools}` : `Schools Tracked by LW in District: ${trackedCount}/${totalSchools}`;
-                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_details')">${trackedText}</button>`;
-            }
+            html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_details')">${trackedText}</button>`;
+
+			html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_stats')">District Details & Contact Info</button>`;
 
             const safeName = dist.name.replace(/'/g, "\\'");
             html += `<button onclick="shareDistrict('${safeName}')" class="popup-share-btn">Share Info</button>`;
@@ -824,7 +902,7 @@
                 });
                 html += `</div>`;
             } else {
-                let listTitle = dist.type === 'region' ? "Schools Tracked by LW in Region" : "Schools Tracked by LW in District";
+                let listTitle = dist.type === 'region' ? "Schools Tracked by LW" : "Schools Tracked by LW";
                 html += `<h4 style="margin:0 0 10px 0; border-bottom:1px solid #ccc;">${listTitle}</h4>`;
                 html += `<div class="scroll-box">`;
 
