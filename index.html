@@ -155,10 +155,32 @@
         .app-val a { color: #007bff; text-decoration: none; }
         .app-val a:hover { text-decoration: underline; }
 
-		.nav-btn { display: block; width: 100%; background: #f4f4f4; border: 1px solid #ddd; padding: 6px; margin-top: 4px; cursor: pointer; border-radius: 2px; font-weight: bold; color: #333; text-align: left; white-space: nowrap; overflow: hidden; font-size: 12px;}
-        /* Change the question mark to a right arrow */
-        .nav-btn::after { content: " \2192"; float: right; color: #888; }
-        .nav-btn:hover { background: #e9e9e9; }
+		.nav-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #007bff;
+            border: none;
+            padding: 6px 16px 6px 12px;
+            margin-top: 4px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            color: white;
+            text-align: left;
+            font-size: 12px;
+            line-height: 1.3;
+        }
+        /* Keep the arrow on the right and prevent it from wrapping */
+        .nav-btn::after {
+            content: " \2192";
+            color: white;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+        .nav-btn:hover { background-color: #0056b3; }
 
         .back-btn { display: inline-block; cursor: pointer; color: #007bff; font-weight: bold; margin-bottom: 10px; text-decoration: none; font-size: 11px; }
         /* Change the question mark to a left arrow */
@@ -469,8 +491,6 @@
                 }
             });
         }
-
-		window.syncButtonSizes();
     });
 
     map.on('popupclose', function(e) {
@@ -570,49 +590,12 @@
         }
     };
 
-	window.syncButtonSizes = function() {
-    // NEW: We wrap the entire logic in a 100ms delay to wait for the popup animation to finish!
-    setTimeout(() => {
-        const popup = document.querySelector('.leaflet-popup-content .app-popup');
-        if (!popup) return;
-
-        const buttons = popup.querySelectorAll('.nav-btn');
-        if (buttons.length === 0) return;
-
-        let minSize = 12; // Our default font size
-
-        // 1. Measure the required size for each button
-        buttons.forEach(btn => {
-            btn.style.fontSize = '12px'; // Reset to measure
-
-            // Because of the delay, scrollWidth and clientWidth will now be 100% accurate
-            if (btn.scrollWidth > btn.clientWidth) {
-                // Calculate the exact ratio of overflow
-                const ratio = btn.clientWidth / btn.scrollWidth;
-
-                // Apply the ratio and multiply by 0.95 to give a 5% visual buffer
-                const neededSize = (12 * ratio) * 0.95;
-
-                if (neededSize < minSize) minSize = neededSize;
-            }
-        });
-
-        if (minSize < 8.5) minSize = 8.5; // Prevent text from becoming entirely illegible
-
-        // 2. Apply the smallest calculated size to ALL buttons in this popup
-        buttons.forEach(btn => {
-            btn.style.fontSize = minSize + 'px';
-        });
-    }, 100); // 100 milliseconds is fast enough that the user won't notice the delay
-};
-
     window.updatePopup = function(distId, screenType, arg = null) {
         setTimeout(() => {
             if (window.currentActivePopup) {
                 const newHtml = renderPopupScreen(distId, screenType, arg);
                 window.currentActivePopup.setContent(newHtml);
                 window.currentActivePopup.update();
-				window.syncButtonSizes();
             }
         }, 10);
     };
@@ -634,7 +617,6 @@
             setTimeout(() => {
                 target.specificMarker.setPopupContent(renderPopupScreen(distId, screenType, sIdx));
                 target.specificMarker.openPopup();
-				window.syncButtonSizes();
             }, 600);
         }
     };
@@ -654,7 +636,6 @@
             setTimeout(() => {
                 target.parentMarker.setPopupContent(renderPopupScreen(targetId, screenType));
                 target.parentMarker.openPopup();
-				window.syncButtonSizes();
             }, 600);
         }
     };
@@ -706,12 +687,11 @@
         // ------------------------------------
         if (screenType === 'main') {
 
-            // --- NEW: Back button to return to the parent Umbrella ---
+            // Back button to return to the parent Umbrella
             if (dist.type === 'region') {
                 const parentUmbrellaId = dist.meta['Dist. Code'];
                 html += `<div class="back-btn" onclick="flyToDistrict('${parentUmbrellaId}')" style="display:block;"> to District Region Umbrella</div>`;
             }
-            // ---------------------------------------------------------
 
             if (dist.type === 'umbrella') {
                 html += `<div style="background:#fff3cd; border-left:4px solid #dc3545; padding:8px; margin-bottom:10px; font-size:11px; color:#856404; text-align:center;">
@@ -720,20 +700,17 @@
                          </div>`;
             }
 
-            // --- DYNAMIC MAXIMUM PHASE CALCULATION ---
-            let displayPhase = dist.phaseNum; // Set the default phase
-
-            // If it's an umbrella, check every single school inside it to find the highest active step
+            // DYNAMIC MAXIMUM PHASE CALCULATION
+            let displayPhase = dist.phaseNum;
             if (dist.type === 'umbrella' && dist.schools) {
                 dist.schools.forEach(school => {
                     let sStep = parseInt(school['Program Launch Step']) || 0;
                     if (sStep > displayPhase) {
-                        displayPhase = sStep; // Overwrite if we find a higher step
+                        displayPhase = sStep;
                     }
                 });
             }
 
-            // --- NEW HEADER STYLING ---
             let lwTitle = displayPhase >= 10 ? `<div style="color:#d32f2f; font-size:16px; font-weight:bold; text-align:center; margin-bottom:5px;">LifeWise is Live</div>`
                 : `<div style="color:#d32f2f; font-size:14px; font-weight:bold; text-align:center;">LifeWise Launch Step: ${displayPhase}</div>
                    <div style="font-size:11px; color:#555; text-align:center; margin-bottom:5px;">Interest List Signatures: ${dist.signatures || '0'}</div>`;
@@ -741,7 +718,7 @@
             html += `<div style="border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 10px;">`;
             html += lwTitle;
 
-            // NEW: Conditional header for Regions vs Districts
+            // Conditional header for Regions vs Districts
             if (dist.type === 'region') {
                 html += `<div style="text-align: center; font-size: 15px; font-weight: bold; margin-bottom: 2px; color:#333;">${dist.regionName} ${districtCharterBadge}</div>`;
                 html += `<div style="text-align: center; font-size: 12px; color: #888; margin-bottom: 8px;">${dist.meta['Dist. Name']}</div>`;
@@ -750,6 +727,8 @@
                 if (dist.meta['Dist. URL'] && dist.meta['Dist. URL'].trim() !== '' && dist.meta['Dist. URL'].toLowerCase() !== 'nan') {
                     html += `<div style="text-align: center; font-size: 12px; margin-bottom: 8px;">${formatLink(dist.meta['Dist. URL'])}</div>`;
                 }
+                // MOVED: District Details button sits right under URL, above the line
+                html += `<button class="nav-btn" style="margin-bottom:8px;" onclick="updatePopup('${distKey}', 'district_stats')">District Details & Contact Info</button>`;
             }
 
             let sigChange = dist.meta['Sig. Change'];
@@ -767,7 +746,7 @@
                 html += `<div style="background:#e2e3e5; padding:4px; text-align:center; font-weight:bold; font-size:10px; margin-bottom:8px; border-radius:3px;">Non-traditional School</div>`;
             }
 
-            // --- NEW: District Policy & Media Links ---
+            // District Policy & Media Links
             let localIssuesHtml = "";
             let baseIssueUrl = dist.meta['Local Issues'];
 
@@ -785,10 +764,7 @@
                         extraLinks.push(`<a href="${href}" target="_blank" style="font-weight:bold; color:#007bff; text-decoration:none;">${index + 2}</a>`);
                     }
                 });
-
-                if (extraLinks.length > 0) {
-                    localIssuesHtml += ` <span style="font-size:11px; margin-left:4px;">(${extraLinks.join(', ')})</span>`;
-                }
+                if (extraLinks.length > 0) { localIssuesHtml += ` <span style="font-size:11px; margin-left:4px;">(${extraLinks.join(', ')})</span>`; }
                 localIssuesHtml += `</div>`;
             }
 
@@ -800,7 +776,7 @@
                 html += `<div style="margin-top: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; text-align:center;">${linksHtml}</div>`;
             }
 
-            // --- Schools Tracked & Participating List ---
+            // Schools Tracked & Participating List
             if (dist.type !== 'umbrella') {
                 let participating = dist.schools.filter(s => s['Grades Served'] && s['Grades Served'].trim() !== '');
                 if (participating.length > 0) {
@@ -814,28 +790,31 @@
                     html += `</ul>`;
                 }
 
-                // --- LifeWise Info Section ---
+                // MOVED: Tracking Button moved up beneath participating schools
+                let trackedCount = dist.schools.length;
+                let totalSchools = dist.meta['Dist. Total Number of Schools'] || '?';
+                if (dist.type === 'region') {
+                    let liveCount = dist.schools.filter(s => s['Grades Served'] && s['Grades Served'].trim() !== '').length;
+                    html += `<button class="nav-btn" style="margin-bottom:12px;" onclick="updatePopup('${distKey}', 'district_details')">Schools Assigned to Region: ${liveCount}/${trackedCount}</button>`;
+                } else {
+                    html += `<button class="nav-btn" style="margin-bottom:12px;" onclick="updatePopup('${distKey}', 'district_details')">Schools Tracked by LW: ${trackedCount}/${totalSchools}</button>`;
+                }
+
+                // UPDATED: LifeWise Info Section (Red & Underlined)
                 html += `<div style="border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px;">
-                            <div style="font-weight:bold; font-size:12px; color:#333; margin-bottom:8px; text-decoration:underline;">LifeWise Info</div>
+                            <div style="font-weight:bold; font-size:12px; color:#d32f2f; margin-bottom:8px; text-decoration:underline;">Local LifeWise Info</div>
                          </div>`;
 
                 html += `<div class="app-row"><span class="app-label">Director Name</span><span class="app-val">${dist.meta['Director Name'] || 'N/A'}</span></div>`;
                 let dEmails = [...new Set([dist.meta['Director Email'], dist.meta['Director Email 2'], dist.meta['Director Email 3']].filter(e => e && e.trim() !== ''))];
                 html += `<div class="app-row"><span class="app-label">Director Email</span><span class="app-val">${dEmails.length > 0 ? dEmails.join('<br>') : 'N/A'}</span></div>`;
                 html += `<div class="app-row"><span class="app-label">Mailing Address</span><span class="app-val">${dist.meta['Mailing Address'] || 'N/A'}</span></div>`;
-
-                let allDistHosting = [dist.meta['LW Hosting Locations']];
-                let allDistEmp = [dist.meta['LW Employees']];
-                dist.schools.forEach(s => {
-                    allDistHosting.push(s['LW Hosting Locations']);
-                    allDistEmp.push(s['LW Employees']);
-                });
-
-                html += `<div class="app-row"><span class="app-label">District Hosting Locations & Sponsoring Churches</span><span class="app-val">${formatMixedText(mergeTokens(...allDistHosting))}</span></div>`;
                 html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(dist.meta['Local Business Sponsors'])}</span></div>`;
-                html += `<div class="app-row"><span class="app-label">Employees & Individuals Attached</span><span class="app-val">${formatMixedText(mergeTokens(...allDistEmp))}</span></div>`;
 
-                // --- ADDING MISSING SECTION ---
+                // REPLACED: Church and Employee text rows are now buttons!
+                html += `<button class="nav-btn" style="margin-top: 8px;" onclick="updatePopup('${distKey}', 'hosting_info')">District Hosting Locations & Sponsoring Churches</button>`;
+                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'employee_info')">Employees & Individuals Attached</button>`;
+
                 html += `<div style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;"><b style="font-size:11px; color:#555;">Program Status & Changes:</b></div>`;
                 html += `<div class="app-row"><span class="app-label">Current Launch Step</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${dist.phaseNum || '0'}</span></div>`;
                 html += `<div class="app-row"><span class="app-label">Current Signatures</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${dist.signatures || '0'}</span></div>`;
@@ -844,50 +823,28 @@
                 if (dist.meta['Step Change']) html += `<div class="app-row"><span class="app-label">Step Change</span><span class="app-val">${dist.meta['Step Change']}</span></div>`;
             }
 			else {
-                // --- NEW: Umbrella Divisional Regions List ---
                 let regions = window.districtsByCode[dist.meta['Dist. Code']].filter(d => d.type === 'region');
                 if (regions.length > 0) {
                     html += `<div style="font-weight:bold; font-size:10px; margin-bottom:2px; margin-left:8px; color:#555;">LifeWise Divisional Regions: <span style="font-weight:normal;">${regions.length}</span></div>`;
                     html += `<ul style="margin:2px 0 10px 0; padding-left:24px; font-size:10px; color:#555;">`;
-
                     regions.forEach(r => {
                         let rSchools = r.schools.length;
-
-                        // --- NEW LOGIC: Calculate participating schools ---
-                        // We filter the region's schools to find only those with a valid 'Grades Served' entry
                         let participatingCount = r.schools.filter(s => s['Grades Served'] && s['Grades Served'].trim() !== '').length;
-
-                        // Clicking these links will smoothly animate the map directly to that Region's umbrella!
                         html += `<li style="margin-bottom:3px;"><a href="#" onclick="flyToDistrict('${r.id}'); return false;" style="color:#007bff; text-decoration:underline; cursor:pointer;">${r.regionName}</a> (${participatingCount} Participating / ${rSchools} Tracked)</li>`;
                     });
-
                     html += `</ul>`;
                 }
+
+                // RESTORED: Schools Tracked button for Umbrella campaigns
+                let trackedCount = dist.schools.length;
+                let totalSchools = dist.meta['Dist. Total Number of Schools'] || '?';
+                html += `<button class="nav-btn" style="margin-bottom:12px;" onclick="updatePopup('${distKey}', 'district_details')">Schools Tracked by LW: ${trackedCount}/${totalSchools}</button>`;
             }
 
-            // Sticky Bottom
+            // CLEANED UP: Sticky Bottom (only contains the Share button now)
             html += `<div class="sticky-buttons">`;
-
-            let trackedCount = dist.schools.length;
-            let totalSchools = dist.meta['Dist. Total Number of Schools'] || '?';
-
-            // NEW: Region vs District specific button logic
-            if (dist.type === 'region') {
-                // Calculate live programs (schools with grades served)
-                let liveCount = dist.schools.filter(s => s['Grades Served'] && s['Grades Served'].trim() !== '').length;
-
-                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_details')">Schools Assigned to Region: ${liveCount}/${trackedCount}</button>`;
-
-                // Note: The Region Details & Contact Info button is intentionally omitted here
-            } else {
-                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_details')">Schools Tracked by LW: ${trackedCount}/${totalSchools}</button>`;
-                // Only render the details & contact button if it's NOT a region
-                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'district_stats')">District Details & Contact Info</button>`;
-            }
-
             const safeName = dist.name.replace(/'/g, "\\'");
             html += `<button onclick="shareDistrict('${safeName}')" class="popup-share-btn">Share Info</button>`;
-
             html += `</div>`;
         }
 
@@ -978,7 +935,6 @@
 
             html += `<div class="back-btn" onclick="flyToDistrict('${distKey}')"></div>`
 
-            // Dynamic Phase Title mirroring the District layout
             let displayPhase = parseInt(school['Program Launch Step'] || "0", 10);
             let lwTitle = displayPhase >= 10 ? `<div style="color:#d32f2f; font-size:16px; font-weight:bold; text-align:center; margin-bottom:5px;">LifeWise is Live</div>`
                 : `<div style="color:#d32f2f; font-size:14px; font-weight:bold; text-align:center;">LifeWise Launch Step: ${displayPhase}</div>
@@ -988,6 +944,9 @@
             html += lwTitle;
             html += `<div style="text-align: center; font-size: 15px; font-weight: bold; margin-bottom: 2px; color:#333;">${school['School Name']} ${charterHeaderBadge}</div>`;
             html += `<div style="text-align:center; font-size:10px; color:#666; margin-bottom:8px;">${dist.meta['State'] || ''} | ${dist.meta['Dist. Name'] || ''}</div>`;
+
+            // MOVED: School Details button sits directly under the name header
+            html += `<button class="nav-btn" style="margin-bottom:8px;" onclick="updatePopup('${distKey}', 'school_stats', ${schoolIdx})">School Details & Contact Info</button>`;
 
             let sigChange = school['Sig. Change'];
             let stepChange = school['Step Change'];
@@ -1000,30 +959,25 @@
             }
             html += `</div>`;
 
-            // Local LifeWise Program Details
-            html += `<div style="font-weight:bold; font-size:12px; color:#333; margin-bottom:8px; text-decoration:underline;">Local LifeWise Info</div>`;
+            // UPDATED: Local LifeWise Program Details (Red & Underlined)
+            html += `<div style="font-weight:bold; font-size:12px; color:#d32f2f; margin-bottom:8px; text-decoration:underline;">Local LifeWise Info</div>`;
+
             html += `<div class="app-row"><span class="app-label">Grades Served</span><span class="app-val">${school['Grades Served'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Director Name</span><span class="app-val">${school['Director Name'] || 'N/A'}</span></div>`;
             let sEmails = [...new Set([school['Director Email'], school['Director Email 2'], school['Director Email 3']].filter(e => e && e.trim() !== ''))];
             html += `<div class="app-row"><span class="app-label">Director Email</span><span class="app-val">${sEmails.length > 0 ? sEmails.join('<br>') : 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Mailing Address</span><span class="app-val">${school['Mailing Address'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">LW URL</span><span class="app-val">${formatLink(school['LW URL'])}</span></div>`;
-
-            let combinedSchoolHosting = mergeTokens(dist.meta['LW Hosting Locations'], school['LW Hosting Locations']);
-            let combinedSchoolEmp = mergeTokens(dist.meta['LW Employees'], school['LW Employees']);
-
-            html += `<div class="app-row"><span class="app-label">District Hosting Locations & Sponsoring Churches</span><span class="app-val">${formatMixedText(combinedSchoolHosting)}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(school['Local Business Sponsors'])}</span></div>`;
-            html += `<div class="app-row"><span class="app-label">Employees & Other Individuals Attached To District Program Internally By LW</span><span class="app-val">${formatMixedText(combinedSchoolEmp)}</span></div>`;
+
+            // REPLACED: Church and Employee text rows are now buttons!
+            html += `<button class="nav-btn" style="margin-top: 8px;" onclick="updatePopup('${distKey}', 'hosting_info', ${schoolIdx})">District Hosting Locations & Sponsoring Churches</button>`;
+            html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'employee_info', ${schoolIdx})">Employees & Individuals Attached To District Program Internally By LW</button>`;
 
             html += `<div class="sticky-buttons">`;
-            // NEW: Button directing to the physical school stats screen
-            html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'school_stats', ${schoolIdx})">School Details & Contact Info</button>`;
-
             const safeDistName = (dist.meta['Dist. Name'] || '').replace(/'/g, "\\'");
             const safeSchoolName = (school['School Name'] || '').replace(/'/g, "\\'");
-            html += `<button onclick="shareSchool('${safeDistName}', '${safeSchoolName}')" class="popup-share-btn" style="margin-top: 10px;">Share School Info</button>`;
-
+            html += `<button onclick="shareSchool('${safeDistName}', '${safeSchoolName}')" class="popup-share-btn">Share School Info</button>`;
             html += `</div>`;
         }
 
@@ -1045,6 +999,46 @@
             html += `<div class="app-row"><span class="app-label">Student/Teacher Ratio</span><span class="app-val">${school['School Student/Teacher Ratio'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Lunch Program</span><span class="app-val">${school['School Lunch Program Status'] || 'N/A'}</span></div>`;
             html += `<div class="app-row"><span class="app-label">Free/Reduced Lunch</span><span class="app-val">${school['School Free and Reduced Lunch Student Totals'] || 'N/A'}</span></div>`;
+        }
+
+		// ------------------------------------
+        // HOSTING & CHURCHES INFO
+        // ------------------------------------
+        else if (screenType === 'hosting_info') {
+            html += `<div class="back-btn" onclick="updatePopup('${distKey}', '${schoolIdx !== null ? 'school_details' : 'main'}', ${schoolIdx !== null ? schoolIdx : 'null'})"></div>`;
+            html += `<h4 style="margin:0 0 10px 0; color:#d32f2f;">Hosting Locations & Sponsoring Churches</h4>`;
+
+            let hostingData = "";
+            if (schoolIdx !== null) {
+                const school = dist.schools[schoolIdx];
+                hostingData = mergeTokens(dist.meta['LW Hosting Locations'], school['LW Hosting Locations']);
+            } else {
+                let allDistHosting = [dist.meta['LW Hosting Locations']];
+                dist.schools.forEach(s => allDistHosting.push(s['LW Hosting Locations']));
+                hostingData = mergeTokens(...allDistHosting);
+            }
+
+            html += `<div style="font-size:12px; line-height:1.5;">${formatMixedText(hostingData)}</div>`;
+        }
+
+        // ------------------------------------
+        // EMPLOYEES INFO
+        // ------------------------------------
+        else if (screenType === 'employee_info') {
+            html += `<div class="back-btn" onclick="updatePopup('${distKey}', '${schoolIdx !== null ? 'school_details' : 'main'}', ${schoolIdx !== null ? schoolIdx : 'null'})"></div>`;
+            html += `<h4 style="margin:0 0 10px 0; color:#d32f2f;">Employees & Individuals Attached</h4>`;
+
+            let empData = "";
+            if (schoolIdx !== null) {
+                const school = dist.schools[schoolIdx];
+                empData = mergeTokens(dist.meta['LW Employees'], school['LW Employees']);
+            } else {
+                let allDistEmp = [dist.meta['LW Employees']];
+                dist.schools.forEach(s => allDistEmp.push(s['LW Employees']));
+                empData = mergeTokens(...allDistEmp);
+            }
+
+            html += `<div style="font-size:12px; line-height:1.5;">${formatMixedText(empData)}</div>`;
         }
 
         // ------------------------------------
