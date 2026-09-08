@@ -138,7 +138,19 @@
         .share-container { margin-top: 15px; font-size: 11px; color: #666; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; border-top: 1px solid #eee; padding-top: 15px; }
         .share-btn { padding: 4px 8px; border-radius: 4px; text-decoration: none; color: white; font-weight: bold; cursor: pointer; font-size: 10px; display: inline-block; flex-grow: 1; text-align: center; }
 
-        .popup-share-btn { background-color: #007bff; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 11px; cursor: pointer; width: 100%; margin-top: 4px; font-weight: bold; }
+        .popup-share-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            width: calc(100% - 16px); /* Matches the navigation buttons */
+            box-sizing: border-box; /* Ensures padding doesn't inflate width */
+            margin-top: 4px;
+            font-weight: bold;
+        }
         .popup-share-btn:hover { background-color: #0056b3; }
 
         .fb { background-color: #1877F2; } .tw { background-color: #000; } .rd { background-color: #FF4500; }
@@ -159,11 +171,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
+            width: calc(100% - 16px); /* Keeps the button away from the scrollbar */
             box-sizing: border-box;
             background-color: #007bff;
             border: none;
-            padding: 6px 16px 6px 12px;
+            padding: 6px 12px; /* Restores perfectly even inner spacing */
             margin-top: 4px;
             cursor: pointer;
             border-radius: 4px;
@@ -191,14 +203,14 @@
         .school-link:hover { background: #f0f8ff; border-color: #b8daff; }
         .scroll-box { max-height: 180px; overflow-y: auto; padding-right: 5px; margin-bottom: 10px; }
 
-		/* --- NEW: Sticky Button Container --- */
-        .sticky-buttons {
+		.sticky-buttons {
             position: sticky;
-            bottom: -1px; /* Anchors it to the very bottom of the scrolling window */
-            background-color: white; /* Hides the scrolling text underneath */
+            bottom: -1px;
+            background-color: white;
             padding-top: 3px;
             padding-bottom: 3px;
-            border-top: 1px solid #eee; /* Adds a nice subtle line separating it from the content */
+            padding-right: 0 !important; /* Prevents a double-gap on the share button */
+            border-top: 1px solid #eee;
             z-index: 10;
         }
 
@@ -728,7 +740,7 @@
                     html += `<div style="text-align: center; font-size: 12px; margin-bottom: 8px;">${formatLink(dist.meta['Dist. URL'])}</div>`;
                 }
                 // MOVED: District Details button sits right under URL, above the line
-                html += `<button class="nav-btn" style="margin-bottom:8px;" onclick="updatePopup('${distKey}', 'district_stats')">District Details & Contact Info</button>`;
+                html += `<button class="nav-btn" style="margin-bottom:8px; width: 100%;" onclick="updatePopup('${distKey}', 'district_stats')">District Details & Contact Info</button>`;
             }
 
             let sigChange = dist.meta['Sig. Change'];
@@ -812,8 +824,8 @@
                 html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(dist.meta['Local Business Sponsors'])}</span></div>`;
 
                 // REPLACED: Church and Employee text rows are now buttons!
-                html += `<button class="nav-btn" style="margin-top: 8px;" onclick="updatePopup('${distKey}', 'hosting_info')">District Hosting Locations & Sponsoring Churches</button>`;
-                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'employee_info')">Employees & Individuals Attached</button>`;
+                html += `<button class="nav-btn" style="margin-top: 8px;" onclick="updatePopup('${distKey}', 'hosting_info')">Host Locations & Sponsor Churches</button>`;
+                html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'employee_info')">Employees & Linked Individuals</button>`;
 
                 html += `<div style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;"><b style="font-size:11px; color:#555;">Program Status & Changes:</b></div>`;
                 html += `<div class="app-row"><span class="app-label">Current Launch Step</span><span class="app-val" style="font-weight:bold; color:#d32f2f;">${dist.phaseNum || '0'}</span></div>`;
@@ -946,7 +958,7 @@
             html += `<div style="text-align:center; font-size:10px; color:#666; margin-bottom:8px;">${dist.meta['State'] || ''} | ${dist.meta['Dist. Name'] || ''}</div>`;
 
             // MOVED: School Details button sits directly under the name header
-            html += `<button class="nav-btn" style="margin-bottom:8px;" onclick="updatePopup('${distKey}', 'school_stats', ${schoolIdx})">School Details & Contact Info</button>`;
+            html += `<button class="nav-btn" style="margin-bottom:8px; width: 100%;" onclick="updatePopup('${distKey}', 'school_stats', ${schoolIdx})">School Details & Contact Info</button>`;
 
             let sigChange = school['Sig. Change'];
             let stepChange = school['Step Change'];
@@ -971,8 +983,8 @@
             html += `<div class="app-row"><span class="app-label">Local Business Sponsors</span><span class="app-val">${formatMixedText(school['Local Business Sponsors'])}</span></div>`;
 
             // REPLACED: Church and Employee text rows are now buttons!
-            html += `<button class="nav-btn" style="margin-top: 8px;" onclick="updatePopup('${distKey}', 'hosting_info', ${schoolIdx})">District Hosting Locations & Sponsoring Churches</button>`;
-            html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'employee_info', ${schoolIdx})">Employees & Individuals Attached To District Program Internally By LW</button>`;
+            html += `<button class="nav-btn" style="margin-top: 8px;" onclick="updatePopup('${distKey}', 'hosting_info', ${schoolIdx})">Host Locations & Sponsor Churches</button>`;
+            html += `<button class="nav-btn" onclick="updatePopup('${distKey}', 'employee_info', ${schoolIdx})">Employees & Linked Individuals</button>`;
 
             html += `<div class="sticky-buttons">`;
             const safeDistName = (dist.meta['Dist. Name'] || '').replace(/'/g, "\\'");
@@ -1006,7 +1018,7 @@
         // ------------------------------------
         else if (screenType === 'hosting_info') {
             html += `<div class="back-btn" onclick="updatePopup('${distKey}', '${schoolIdx !== null ? 'school_details' : 'main'}', ${schoolIdx !== null ? schoolIdx : 'null'})"></div>`;
-            html += `<h4 style="margin:0 0 10px 0; color:#d32f2f;">Hosting Locations & Sponsoring Churches</h4>`;
+            html += `<h4 style="margin:0 0 10px 0; color:#d32f2f;">Host Locations & Sponsor Churches</h4>`;
 
             let hostingData = "";
             if (schoolIdx !== null) {
@@ -1026,7 +1038,7 @@
         // ------------------------------------
         else if (screenType === 'employee_info') {
             html += `<div class="back-btn" onclick="updatePopup('${distKey}', '${schoolIdx !== null ? 'school_details' : 'main'}', ${schoolIdx !== null ? schoolIdx : 'null'})"></div>`;
-            html += `<h4 style="margin:0 0 10px 0; color:#d32f2f;">Employees & Individuals Attached</h4>`;
+            html += `<h4 style="margin:0 0 10px 0; color:#d32f2f;">Employees & Linked Individuals</h4>`;
 
             let empData = "";
             if (schoolIdx !== null) {
